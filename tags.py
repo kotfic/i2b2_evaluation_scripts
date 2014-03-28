@@ -145,7 +145,6 @@ class AnnotatorTag(Tag):
         element = etree.Element(self.name)
         for k,v in zip(self.key, self._get_key()):
             element.attrib[k] = v
-
         return DocumentTag(element)
 
 
@@ -163,8 +162,9 @@ class AnnotatorTag(Tag):
 
 
 class PHITag(AnnotatorTag):
+    valid_TYPE = "PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM", "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY", "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE", "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN", "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE", "VEHICLE", "DEVICE", "BIOID", "IDNUM"
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes['TYPE'] = lambda v: True
+    attributes['TYPE'] = lambda v: v in PHITag.valid_TYPE
 
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
 
@@ -213,6 +213,7 @@ class OtherTag(PHITag):
 
 
 PHITag.tag_types = {
+    "PHI" : PHITag,
     "NAME" : NameTag,
     "PROFESSION" : ProfessionTag,
     "LOCATION" : LocationTag,
