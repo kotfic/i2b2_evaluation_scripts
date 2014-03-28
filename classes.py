@@ -3,7 +3,7 @@ from lxml import etree
 import os
 import numpy
 from collections import defaultdict, OrderedDict
-
+from tags import DocumentTag
 
 class StandoffAnnotation():
 
@@ -304,7 +304,42 @@ class Evaluate(object):
 class EvaluatePHI(Evaluate):
     def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
         super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
-        # To Implement
+
+        assert len(set([a.annotator_id for a in annotator_cas.values()])) == 1, \
+            "More than one annotator ID in this set of Annotations!"
+        
+        self.annotator_id = annotator_cas.values()[0].annotator_id
+        
+        assert set([v for v in annotator_cas.values() if v]) == set(gold_cas.values()), \
+            "Documents for annotator %s are not the same as the gold standard!" % (self.annotator_id)
+        
+        for doc_id, gs_ca in gold_cas.items():
+            if filters != None:
+            # Get all doc tags for each tag that passes all the predicate functions in filters
+                if conjunctive:
+                    if invert:
+                        gold = set([t for t in gs_ca.get_phi() if not all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() if not all( [f(t) for f in self.filters] )])
+                    else:
+                        gold = set([t for t in gs_ca.get_phi() if all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() if all( [f(t) for f in self.filters] )])
+                else:
+                    if invert:
+                        gold = set([t for t in gs_ca.get_phi() if not any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() if not any( [f(t) for f in self.filters] )])
+                    else:
+                        gold = set([t for t in gs_ca.get_phi() if any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() if any( [f(t) for f in self.filters] )])
+                    
+            else:
+                gold = set(gs_ca.get_phi())
+                system = set(annotator_cas[doc_id].get_phi())
+
+            self.tp.append(gold.intersection(system))
+            self.fp.append(system - gold)
+            self.fn.append(gold - system)
+            self.doc_ids.append(doc_id)
+
 
 
 class EvaluateCardiacRisk(Evaluate):
