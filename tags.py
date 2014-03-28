@@ -8,6 +8,14 @@ from collections import OrderedDict
 ##       [+]DocumentTag
 ##       [+]AnnotatorTag
 ##          [+]PHITag
+##             [+]NameTag       
+##             [+]ProfessionTag 
+##             [+]LocationTag   
+##             [+]AgeTag        
+##             [+]DateTag       
+##             [+]ContactTag    
+##             [+]IDTag         
+##             [+]OtherTag      
 ##          [+]DiseaseTag
 ##             [+]DiabetesTag
 ##             [+]CADTag
@@ -154,17 +162,65 @@ class AnnotatorTag(Tag):
             return self.end
 
 
-
-
-
-
 class PHITag(AnnotatorTag):
-    valid_type = ["PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM", "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY", "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE", "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN", "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE", "VEHICLE", "DEVICE", "BIOID", "IDNUM"]
-
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes['TYPE'] = lambda v: v in PHITag.valid_type
+    attributes['TYPE'] = lambda v: True
 
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
+
+
+class NameTag(PHITag):
+    valid_TYPE = [ 'PATIENT','DOCTOR','USERNAME' ]
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in NameTag.valid_type
+
+
+class ProfessionTag(PHITag):
+    valid_TYPE = ["NAME"]
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in ProfessionTag.valid_type
+
+class LocationTag(PHITag):
+    valid_TYPE = ['ROOM','DEPARTMENT','HOSPITAL','ORGANIZATION','STREET','CITY','STATE','COUNTRY','ZIP','LOCATION-OTHER']
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in LocationTag.valid_type
+
+class AgeTag(PHITag):
+    valid_TYPE = ['AGE']
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in AgeTag.valid_type
+
+class DateTag(PHITag):
+    valid_TYPE = ['DATE']
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in DateTag.valid_type
+
+class ContactTag(PHITag):
+    valid_TYPE = ['PHONE','FAX','EMAIL','URL','IPADDR']
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in ContactTag.valid_type
+
+class IDTag(PHITag):
+    valid_TYPE = ['SSN','MEDICALRECORD','HEALTHPLAN','ACCOUNT','LICENSE','VEHICLE','DEVICE','BIOID','IDNUM']
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in IDTag.valid_type
+
+class OtherTag(PHITag):
+    valid_TYPE =  'OTHER'
+    attributes = OrderedDict(PHITag.attributes.items())
+    attributes['TYPE'] = lambda v: v in OtherTag.valid_type
+        
+
+
+PHITag.tag_types = {
+    "NAME" : NameTag,
+    "PROFESSION" : ProfessionTag,
+    "LOCATION" : LocationTag,
+    "AGE" : AgeTag,
+    "DATE" : DateTag,
+    "CONTACT" : ContactTag,
+    "ID" : IDTag,
+    "OTHER" : OtherTag }
 
 
 
@@ -322,6 +378,15 @@ class DocumentTag(Tag):
         return element
 
 
+PHI_TAG_CLASSES = [NameTag,
+                   ProfessionTag,
+                   LocationTag,   
+                   AgeTag,  
+                   DateTag,       
+                   ContactTag,
+                   IDTag,   
+                   OtherTag]
+
 # Comment should be last in tag order,  so add it down here
 # that way all other sub tags have had their attributes set first
 # This also provides the MEDICAL_TAG_CLASSES list.
@@ -335,5 +400,5 @@ MEDICAL_TAG_CLASSES = [FamilyHistTag,
                        ObeseTag,
                        MedicationTag]
 
-for c in MEDICAL_TAG_CLASSES:
+for c in MEDICAL_TAG_CLASSES + PHI_TAG_CLASSES:
     c.attributes["comment"] = lambda v: True
