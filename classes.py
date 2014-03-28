@@ -306,7 +306,7 @@ class Evaluate(object):
 
 class EvaluatePHI(Evaluate):
     def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
-        super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
+        super(EvaluatePHI, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
 
         assert len(set([a.annotator_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"

@@ -1,6 +1,18 @@
 from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 import argparse
 import os
+from collections import defaultdict
+
+def get_document_dict_by_annotator_id(annotator_dirs):
+    documents = defaultdict(lambda : defaultdict(int))
+    
+    for d in annotator_dirs:
+        for fn in os.listdir(d):
+            ca = StandoffAnnotation(d + fn)
+            documents[ca.annotator_id][ca.id] = ca
+            
+    return documents
+
 
 
 def evaluate(annotator_dirs, gs, verbose=False, filters=None, invert=False, conjunctive=False, phi=False):

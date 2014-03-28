@@ -172,43 +172,43 @@ class PHITag(AnnotatorTag):
 class NameTag(PHITag):
     valid_TYPE = [ 'PATIENT','DOCTOR','USERNAME' ]
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in NameTag.valid_type
+    attributes['TYPE'] = lambda v: v in NameTag.valid_TYPE
 
 
 class ProfessionTag(PHITag):
-    valid_TYPE = ["NAME"]
+    valid_TYPE = ["PROFESSION"]
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in ProfessionTag.valid_type
+    attributes['TYPE'] = lambda v: v in ProfessionTag.valid_TYPE
 
 class LocationTag(PHITag):
     valid_TYPE = ['ROOM','DEPARTMENT','HOSPITAL','ORGANIZATION','STREET','CITY','STATE','COUNTRY','ZIP','LOCATION-OTHER']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in LocationTag.valid_type
+    attributes['TYPE'] = lambda v: v in LocationTag.valid_TYPE
 
 class AgeTag(PHITag):
     valid_TYPE = ['AGE']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in AgeTag.valid_type
+    attributes['TYPE'] = lambda v: v in AgeTag.valid_TYPE
 
 class DateTag(PHITag):
     valid_TYPE = ['DATE']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in DateTag.valid_type
+    attributes['TYPE'] = lambda v: v in DateTag.valid_TYPE
 
 class ContactTag(PHITag):
     valid_TYPE = ['PHONE','FAX','EMAIL','URL','IPADDR']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in ContactTag.valid_type
+    attributes['TYPE'] = lambda v: v in ContactTag.valid_TYPE
 
 class IDTag(PHITag):
     valid_TYPE = ['SSN','MEDICALRECORD','HEALTHPLAN','ACCOUNT','LICENSE','VEHICLE','DEVICE','BIOID','IDNUM']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in IDTag.valid_type
+    attributes['TYPE'] = lambda v: v in IDTag.valid_TYPE
 
 class OtherTag(PHITag):
     valid_TYPE =  'OTHER'
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in OtherTag.valid_type
+    attributes['TYPE'] = lambda v: v in OtherTag.valid_TYPE
         
 
 
