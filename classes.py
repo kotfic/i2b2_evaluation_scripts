@@ -288,16 +288,17 @@ class Evaluate(object):
         print("{:<15}{:<15}{:<15}{:<20}".format("",      "F1",        "{:.4}".format(Evaluate.F_beta(Mp, Mr)), "{:.4}".format(Evaluate.F_beta(mr, mp))))
         print("\n")
 
-
+    def print_docs(self):
+        print("Report for {}:".format(self.annotator_id))
+        print("{:<15}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro") )
+        print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
+        self._print_docs()
 
 
     def print_report(self, verbose=False):
         self.verbose = verbose
         if verbose:
-            print("Report for {}:".format(self.annotator_id))
-            print("{:<15}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro") )
-            print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
-            self._print_docs()
+            self.print_docs()
 
         self._print_summary()
 

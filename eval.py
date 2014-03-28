@@ -18,17 +18,30 @@ def get_document_dict_by_annotator_id(annotator_dirs):
 def evaluate(annotator_dirs, gs, verbose=False, filters=None, invert=False, conjunctive=False, phi=False):
     gold_cas = {}
 
-    for fn in os.listdir(gs):
-        ca = StandoffAnnotation(gs + fn)
-        gold_cas[ca.id] = ca
-    
-    for annotator_id, annotator_cas in get_document_dict_by_annotator_id(annotator_dirs).items():
+    if os.path.isfile(gs):
+        gs = StandoffAnnotation(gs)
+        sys = StandoffAnnotation(annotator_dirs[0])
         if phi:
-            e = EvaluatePHI(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
+            e = EvaluatePHI({sys.id : sys}, {gs.id : gs}, filters=filters, invert=invert, conjunctive=conjunctive)
         else:
-            e = EvaluateCardiacRisk(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
+            e = EvaluateCardiacRisk({sys.id : sys}, {gs.id : gs}, filters=filters, invert=invert, conjunctive=conjunctive)
+            
+        e.print_docs()
+        
+    elif os.path.isdir(gs):
+        for fn in os.listdir(gs):
+            ca = StandoffAnnotation(gs + fn)
+            gold_cas[ca.id] = ca
+    
+        for annotator_id, annotator_cas in get_document_dict_by_annotator_id(annotator_dirs).items():
+            if phi:
+                e = EvaluatePHI(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
+            else:
+                e = EvaluateCardiacRisk(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
 
-        e.print_report(verbose=verbose)
+            e.print_report(verbose=verbose)
+    else:
+        Exception("Must pass file.xml file.xml  or directory/ directory/ on command line!")
 
     return True
 
