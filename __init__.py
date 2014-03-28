@@ -1,7 +1,7 @@
-__all__ = ["PHITag", "DiseaseTag", "DiabetesTag", "CADTag" "HypertensionTag", "HyperlipidemiaTag", "ObeseTag", "MedicationTag", "FamilyHistTag", "SmokerTag", "CardiacAnnotation", "EvaluatePHI", "EvaluateCardiacRisk" ]
+__all__ = ["PHITag", "DocumentTag", "DiabetesTag", "CADTag" "HypertensionTag", "HyperlipidemiaTag", "ObeseTag", "MedicationTag", "FamilyHistTag", "SmokerTag", "CardiacAnnotation", "EvaluatePHI", "EvaluateCardiacRisk" ]
 
 
-from tags import PHITag, DiseaseTag, DiabetesTag, CADTag HypertensionTag, HyperlipidemiaTag, ObeseTag, MedicationTag, FamilyHistTag, SmokerTag
+from tags import PHITag, DocumentTag, DiabetesTag, CADTag, HypertensionTag, HyperlipidemiaTag, ObeseTag, MedicationTag, FamilyHistTag, SmokerTag
 
 from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 

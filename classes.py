@@ -3,18 +3,19 @@ from lxml import etree
 import os
 import numpy
 from collections import defaultdict, OrderedDict
-from tags import DocumentTag
+from tags import *
 
 class StandoffAnnotation():
 
     id_parser = re.compile(r'^(\d+-\d+)(.*)\.xml')
     
-    def __init__(self, file_name=None):
+    def __init__(self, file_name=None, root="root"):
         self.id = ''
         self.annotator_id = ''
         self.file_name = None
         self.raw = None
         self.text = None
+        self.root = root
         self.doc_tags = []
         self.tags = []
         self.phi = []
@@ -42,7 +43,7 @@ class StandoffAnnotation():
         return self.id == other.id and other.id == self.id
 
     def toElement(self, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True):
-        root = etree.Element("CardiacRiskTask")
+        root = etree.Element(self.root)
         text = etree.SubElement(root, "TEXT")
         tags = etree.SubElement(root, "TAGS")
         text.text = etree.CDATA(self.text)
@@ -120,7 +121,7 @@ class StandoffAnnotation():
         return True
     
     def __repr__(self):
-        return "<CardiacAnnotation (%s) %s: tags:%s phi:%s>" % (self.annotator_id, self.id, len(self.get_tags()), len(self.get_phi()))
+        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" % (self.annotator_id, self.id, len(self.get_tags()), len(self.get_phi()))
 
     def get_filename(self):
         return self.file_name
@@ -176,6 +177,7 @@ class StandoffAnnotation():
             self.raw = text
 
         soup = etree.fromstring(self.raw.encode("utf-8"))
+        self.root = soup.tag    
 
         try:
             self.text = soup.find("TEXT").text
@@ -184,10 +186,11 @@ class StandoffAnnotation():
 
             
         # Handles files where PHI, and Annotator Tags are all just stuffed into tag element
-        if len(soup.find("TAGS").findall("PHI")):
-            for element in soup.find("TAGS").findall("PHI"):
-                self.phi.append(PHITag(element))
-
+        for t, cls in PHITag.tag_types.items():
+            if len(soup.find("TAGS").findall(t)):
+                for element in soup.find("TAGS").findall(t):
+                    self.phi.append(cls(element))
+   
 
         for t, cls in DocumentTag.tag_types.items():
             if len(soup.find("TAGS").findall(t)):
