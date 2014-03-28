@@ -3,7 +3,7 @@ from lxml import etree
 import os
 import numpy
 from collections import defaultdict, OrderedDict
-
+from tags import *
 
 class StandoffAnnotation():
 
@@ -120,7 +120,7 @@ class StandoffAnnotation():
         return True
     
     def __repr__(self):
-        return "<CardiacAnnotation (%s) %s: tags:%s phi:%s>" % (self.annotator_id, self.id, len(self.get_tags()), len(self.get_phi()))
+        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" % (self.annotator_id, self.id, len(self.get_tags()), len(self.get_phi()))
 
     def get_filename(self):
         return self.file_name
