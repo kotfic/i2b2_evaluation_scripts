@@ -27,6 +27,11 @@ from collections import OrderedDict
 ##          [+]SmokerTag
 
 
+class MalformedTagException(Exception):
+    pass
+
+class InvalidAttributException(Exception):
+    pass
 
 def isint(value):
     try:
@@ -134,11 +139,26 @@ class AnnotatorTag(Tag):
                 if validp(element.attrib[k]):
                     setattr(self, k, element.attrib[k])
                 else:
+                    
                     print("WARNING: Expected attribute '%s' for xml element <%s (%s)>  was not valid ('%s')" % (k, element.tag, element.attrib['id'], element.attrib[k]) )
                     setattr(self, k, element.attrib[k])
             elif k in self.key:
                 print("WARNING: Expected attribute '%s' for xml element <%s ('%s')>, setting to ''" % (k, element.tag, element.attrib['id']) )
                 setattr(self, k, '')
+
+    def validate(self):
+        for k,validp in self.attributes.items():
+            try:
+                if validp(getattr(self, k)):
+                    continue
+                else:
+                    return False
+            except AttributeError:
+                if k in self.key:
+                    return False
+
+        return True
+        
 
 
     def get_document_annotation(self):
