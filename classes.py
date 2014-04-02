@@ -281,7 +281,7 @@ class Evaluate(object):
         mp = self.micro_precision(self.tp, self.fp)
         mr = self.micro_recall(self.tp, self.fn)
 
-        print("{:<15}{:<15}{:<15}{:<20}".format(self.annotator_id, "Measure", "Macro (SD)", "Micro") )
+        print("{:<15}{:<15}{:<15}{:<20}".format(self.annotator_id + " ({})".format(len(self.doc_ids)), "Measure", "Macro (SD)", "Micro") )
         print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
         print("{:<15}{:<15}{:<15}{:<20}".format("Total", "Precision", "{:.4} ({:.2})".format(Mp, Mp_std),      "{:.4}".format(mp)))
         print("{:<15}{:<15}{:<15}{:<20}".format("",      "Recall",    "{:.4} ({:.2})".format(Mr, Mr_std),      "{:.4}".format(mr)))
@@ -314,29 +314,27 @@ class EvaluatePHI(Evaluate):
         
         self.annotator_id = annotator_cas.values()[0].annotator_id
         
-        assert set([v for v in annotator_cas.values() if v]) == set(gold_cas.values()), \
-            "Documents for annotator %s are not the same as the gold standard!" % (self.annotator_id)
         
-        for doc_id, gs_ca in gold_cas.items():
+        for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
             if filters != None:
             # Get all doc tags for each tag that passes all the predicate functions in filters
                 if conjunctive:
                     if invert:
-                        gold = set([t for t in gs_ca.get_phi() if not all( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() if not all( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_phi() if not all( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gs_ca.get_phi() if all( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() if all( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_phi() if all( [f(t) for f in self.filters] )])
                 else:
                     if invert:
-                        gold = set([t for t in gs_ca.get_phi() if not any( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() if not any( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_phi() if not any( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gs_ca.get_phi() if any( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() if any( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_phi() if any( [f(t) for f in self.filters] )])
                     
             else:
-                gold = set(gs_ca.get_phi())
+                gold = set(gold_cas[doc_id].get_phi())
                 system = set(annotator_cas[doc_id].get_phi())
 
             self.tp.append(gold.intersection(system))
@@ -354,29 +352,27 @@ class EvaluateCardiacRisk(Evaluate):
             "More than one annotator ID in this set of Annotations!"
         self.annotator_id = annotator_cas.values()[0].annotator_id
         
-        assert set([v for v in annotator_cas.values() if v]) == set(gold_cas.values()), \
-            "Documents for annotator %s are not the same as the gold standard!" % (self.annotator_id)
         
-        for doc_id, gs_ca in gold_cas.items():
+        for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
             if filters != None:
             # Get all doc tags for each tag that passes all the predicate functions in filters
                 if conjunctive:
                     if invert:
-                        gold = set([t for t in gs_ca.get_doc_tags() if not all( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if not all( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_doc_tags() if not all( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gs_ca.get_doc_tags() if all( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if all( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_doc_tags() if all( [f(t) for f in self.filters] )])
                 else:
                     if invert:
-                        gold = set([t for t in gs_ca.get_doc_tags() if not any( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if not any( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_doc_tags() if not any( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gs_ca.get_doc_tags() if any( [f(t) for f in self.filters] ) ])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if any( [f(t) for f in self.filters] ) ])
                         system = set([t for t in annotator_cas[doc_id].get_doc_tags() if any( [f(t) for f in self.filters] )])
                     
             else:
-                gold = set(gs_ca.get_doc_tags())
+                gold = set(gold_cas[doc_id].get_doc_tags())
                 system = set(annotator_cas[doc_id].get_doc_tags())
 
             self.tp.append(gold.intersection(system))
