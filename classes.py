@@ -269,7 +269,12 @@ class Evaluate(object):
             mp = Evaluate.precision(self.tp[i], self.fp[i])
             mr = Evaluate.recall(self.tp[i], self.fn[i])
             print("{:<15}{:<15}{:<15}{:<20}".format(doc_id, "Precision", "", "{:.4}".format(mp)))
-            print("{:<15}{:<15}{:<15}{:<20}".format("",     "Recall",    "", "{:.4}".format(mr)))
+            print("{:<15}{:<15}{:<15}{:<20}".format("[{}({}){}]".format(len(self.tp[i]) + len(self.fn[i]), 
+                                                                          len(self.tp[i]),
+                                                                          len(self.tp[i]) + len(self.fp[i])),     
+                                                    "Recall",    
+                                                    "", 
+                                                    "{:.4}".format(mr)))
             print("{:<15}{:<15}{:<15}{:<20}".format("",     "F1",        "", "{:.4}".format(Evaluate.F_beta(mp, mr))))
             print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
 
