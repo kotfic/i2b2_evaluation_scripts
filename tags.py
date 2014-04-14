@@ -105,7 +105,7 @@ class Tag(object):
     def toDict(self, attributes=None):
         d = {}
         if attributes == None:
-            attributes = ["name"] + [key for k, v in self.attributes.items()]
+            attributes = ["name"] + [k for k, v in self.attributes.items()]
 
         for a in attributes:
             try:
@@ -127,6 +127,13 @@ class AnnotatorTag(Tag):
 
 
     key = ["name"]
+
+
+    def __repr__(self):
+        try:
+            return "<{0}: {1} s:{2} e:{3}>".format(self.__class__.__name__, ", ".join(self._get_key()), self.start, self.end )
+        except AttributeError:
+            return super(Tag, self).__repr__()
 
 
     def __init__(self, element):

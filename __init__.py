@@ -5,7 +5,7 @@ from tags import PHITag, DocumentTag, DiabetesTag, CADTag, HypertensionTag, Hype
 
 from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 
-from evaluate import evaluate
+from evaluate import evaluate, get_predicate_function
 
 
 

@@ -2,6 +2,53 @@ from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 import argparse
 import os
 from collections import defaultdict
+from tags import DocumentTag, MEDICAL_TAG_CLASSES
+
+def get_predicate_function(arg):
+    
+    attrs = []
+
+    # Get a list of valid attributes for this argument
+    if arg in DocumentTag.tag_types.keys():
+        attrs.append("name")
+    else:
+        tag_attributes = ["valid_type1", "valid_type2", "valid_indicator", "valid_status", "valid_time", "valid_type"]
+        for cls in MEDICAL_TAG_CLASSES:
+            for attr in tag_attributes:
+                try:
+                    if arg in getattr(cls, attr):
+                        # add the attribute,  strip out the "valid_" prefix
+                        attrs.append(attr.replace("valid_", ""))
+                except AttributeError:
+                    continue
+        # Delete these so we don't end up carrying around references in our function
+        try:
+            del tag_attributes
+            del cls
+            del attr
+        except NameError:
+            pass
+
+    attrs = list(set(attrs))
+
+    if len(attrs) == 0:
+        print("WARNING: could not find valid class attribute for \"{}\", skipping.".format(arg))
+        return lambda t: True
+    
+    def matchp(t):
+        for attr in attrs:
+            if attr == "name" and t.name == arg:
+                return True                            
+            else:
+                try:
+                    if getattr(t, attr).lower() == arg.lower():
+                        return True                    
+                except (AttributeError, KeyError):
+                    pass
+        return False
+
+    return matchp
+
 
 def get_document_dict_by_annotator_id(annotator_dirs):
     documents = defaultdict(lambda : defaultdict(int))
