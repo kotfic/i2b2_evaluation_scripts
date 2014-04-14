@@ -7,10 +7,11 @@ from tags import *
 
 class StandoffAnnotation():
 
-    id_parser = re.compile(r'^(\d+-\d+)(.*)\.xml')
+    id_parser = re.compile(r'^(\d+)-(\d+)(.*)\.xml')
     
     def __init__(self, file_name=None, root="root"):
-        self.id = ''
+        self.patient_id = ''
+        self.record_id = ''
         self.annotator_id = ''
         self.file_name = None
         self.raw = None
@@ -24,17 +25,21 @@ class StandoffAnnotation():
 
         if file_name:
             if self.id_parser.match(os.path.basename(file_name)):
-                self.id, self.annotator_id = self.id_parser.match(os.path.basename(file_name)).groups()
+                self.patient_id, self.record_id, self.annotator_id = self.id_parser.match(os.path.basename(file_name)).groups()
             else:
-                self.id = os.path.splitext(os.path.basename(file_name))[0]
+                self.patient_id = os.path.splitext(os.path.basename(file_name))[0]
         else:
-            self.id = None
+            self.patient_id = None
 
             
         if file_name is not None:
             with open(file_name) as handle:
                 self.parse_text_and_tags(handle.read())
                 self.file_name = file_name
+                
+    @property
+    def id(self):
+        return self.patient_id + "-" + self.record_id
 
     def __hash__(self):
         return hash(self.id)
