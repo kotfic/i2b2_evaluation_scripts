@@ -5,6 +5,24 @@ import numpy
 from collections import defaultdict, OrderedDict
 from tags import *
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
+    def disable(self):
+        self.HEADER = ''
+        self.OKBLUE = ''
+        self.OKGREEN = ''
+        self.WARNING = ''
+        self.FAIL = ''
+        self.ENDC = ''
+
+
+
 class StandoffAnnotation():
 
     id_parser = re.compile(r'^(\d+)-(\d+)(.*)\.xml')
@@ -47,6 +65,64 @@ class StandoffAnnotation():
     def __eq__(self, other):
         return self.id == other.id and other.id == self.id
 
+
+    def squish(self,positions):
+        """Squish a serise of potentially overlapping start/end positions 
+        into a list of non overlapping start/end positions. Behavior of merging
+        different types is undefined. As in- it probably doesn't do what you want."""
+
+
+    def get_annotation_tag_color(self, name):
+        tag_colors = {"DIABETES" : ('\033[31m','\033[0m'),
+                      "CAD" : ('\033[31m','\033[0m'),
+                      "HYPERTENSION" : ('\033[31m','\033[0m'),
+                      "HYPERLIPIDEMIA" : ('\033[31m','\033[0m'),
+                      "SMOKER" : ('\033[31m','\033[0m'),
+                      "OBESE" : ('\033[31m','\033[0m'),
+                      "FAMILY_HIST" : ('\033[31m','\033[0m'),
+                      "MEDICATION" : ('\033[31m','\033[0m')}
+
+        try:
+            return tag_colors[name]
+        except KeyError:
+            return ('\033[90m','\033[0m')
+
+
+    def get_annotator_marked_text(self):
+        """ Go through marking the entire text with color codes used to identify different
+        Types of Human annotations"""
+        text = self.get_text()
+        
+        # This should ensure we have eliminated any overlapping positions information
+        positions = []
+        for tag in self.get_tags():
+            if hasattr(tag, "start") and hasattr(tag, "end"):
+                positions.append((tag.get_start(), tag.get_end(), tag))
+        
+        positions.sort(key=lambda x: x[0])
+
+        last_start = positions[0][0]
+        last_end = positions[0][1]
+        concat = []
+        for start,end,t in positions[1:]:
+            if start <= last_end:
+                if end >= last_end:
+                    last_end = end
+            else:
+                concat.append((last_start,last_end, t))
+                last_start = start
+                last_end = end
+
+        concat.append((last_start,last_end, t))
+
+        # return the text
+        for start, end, tag in sorted(concat, key=lambda x: x[0], reverse=True):
+            open_str, close_str  = self.get_annotation_tag_color(tag.name)
+            text = text[:start] + open_str + text[start:end] + close_str + text[end:]
+
+        return text
+
+    
     def toElement(self, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True):
         root = etree.Element(self.root)
         text = etree.SubElement(root, "TEXT")
@@ -175,7 +251,7 @@ class StandoffAnnotation():
             return self.tags
 
     def get_sorted_tags(self,reverse=False):
-        return sorted(self.tags, key=lambda tag: tag.get_start(), reverse=reverse)
+        return sorted(self.get_tags(), key=lambda tag: tag.get_start(), reverse=reverse)
 
     def parse_text_and_tags(self, text=None):
         if text is not None:
