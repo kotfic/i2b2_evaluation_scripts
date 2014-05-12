@@ -31,7 +31,7 @@ class StandoffAnnotation():
     def __init__(self, file_name=None, root="root"):
         self.patient_id = ''
         self.record_id = ''
-        self.annotator_id = ''
+        self.sys_id = ''
         self.file_name = None
         self.raw = None
         self.text = None
@@ -44,7 +44,7 @@ class StandoffAnnotation():
 
         if file_name:
             if self.id_parser.match(os.path.basename(file_name)):
-                self.patient_id, self.record_id, self.annotator_id = self.id_parser.match(os.path.basename(file_name)).groups()
+                self.patient_id, self.record_id, self.sys_id = self.id_parser.match(os.path.basename(file_name)).groups()
             else:
                 self.patient_id = os.path.splitext(os.path.basename(file_name))[0]
         else:
@@ -203,7 +203,7 @@ class StandoffAnnotation():
         return True
     
     def __repr__(self):
-        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" % (self.annotator_id, self.id, len(self.get_tags()), len(self.get_phi()))
+        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" % (self.sys_id, self.id, len(self.get_tags()), len(self.get_phi()))
 
     def get_filename(self):
         return self.file_name
@@ -369,7 +369,7 @@ class Evaluate(object):
         mp = self.micro_precision(self.tp, self.fp)
         mr = self.micro_recall(self.tp, self.fn)
 
-        print("{:<15}{:<15}{:<15}{:<20}".format(self.annotator_id + " ({})".format(len(self.doc_ids)), "Measure", "Macro (SD)", "Micro") )
+        print("{:<15}{:<15}{:<15}{:<20}".format(self.sys_id + " ({})".format(len(self.doc_ids)), "Measure", "Macro (SD)", "Micro") )
         print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
         print("{:<15}{:<15}{:<15}{:<20}".format("Total", "Precision", "{:.4} ({:.2})".format(Mp, Mp_std),      "{:.4}".format(mp)))
         print("{:<15}{:<15}{:<15}{:<20}".format("",      "Recall",    "{:.4} ({:.2})".format(Mr, Mr_std),      "{:.4}".format(mr)))
@@ -377,7 +377,7 @@ class Evaluate(object):
         print("\n")
 
     def print_docs(self):
-        print("Report for {}:".format(self.annotator_id))
+        print("Report for {}:".format(self.sys_id))
         print("{:<15}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro") )
         print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
         self._print_docs()
@@ -397,10 +397,10 @@ class EvaluatePHI(Evaluate):
     def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
         super(EvaluatePHI, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
 
-        assert len(set([a.annotator_id for a in annotator_cas.values()])) == 1, \
+        assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"
         
-        self.annotator_id = annotator_cas.values()[0].annotator_id
+        self.sys_id = annotator_cas.values()[0].sys_id
         
         
         for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
@@ -436,9 +436,9 @@ class EvaluateCardiacRisk(Evaluate):
     def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
         super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
         
-        assert len(set([a.annotator_id for a in annotator_cas.values()])) == 1, \
+        assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"
-        self.annotator_id = annotator_cas.values()[0].annotator_id
+        self.sys_id = annotator_cas.values()[0].sys_id
         
         
         for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):

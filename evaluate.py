@@ -1,27 +1,51 @@
+################################################################################
+##
+## 
+##
+
 from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 import argparse
 import os
 from collections import defaultdict
 from tags import DocumentTag, MEDICAL_TAG_CLASSES
 
+
+# This function is 'exterimental' as in it works for my use cases
+# But is not generally well documented or a part of the expected
+# workflow.
 def get_predicate_function(arg):
-    
+    """ This function takes a tag attribute value, determines the attribute(s)
+    of the class(es) this value belongs to,  and then returns a predicate
+    function that returns true if this value is set for the  calculated
+    attribute(s) on the class(es). This allows for overlap - ie. "ACE Inhibitor"
+    is a valid type1 and a valid type2 attribute value.  If arg equals
+    "ACE Inhibitor" our returned predicate function will return true if our
+    tag has "ACE Inhibitor" set for either type1 or type2 attributes. Currently
+    this is implemented to ONLY work with MEDICAL_TAG_CLASSES but could be
+    easily extended to work with PHI tag classes.
+    """
     attrs = []
 
     # Get a list of valid attributes for this argument
+    # If we have a tag name (ie. MEDICATION) add 'name' to the attributes
     if arg in DocumentTag.tag_types.keys():
         attrs.append("name")
     else:
-        tag_attributes = ["valid_type1", "valid_type2", "valid_indicator", "valid_status", "valid_time", "valid_type"]
+        tag_attributes = ["valid_type1", "valid_type2", "valid_indicator",
+                          "valid_status", "valid_time", "valid_type"]
         for cls in MEDICAL_TAG_CLASSES:
             for attr in tag_attributes:
                 try:
                     if arg in getattr(cls, attr):
                         # add the attribute,  strip out the "valid_" prefix
+                        # This assumes that classes follow the
+                        # valid_ATTRIBUTE convention
+                        # and will break if they are extended
                         attrs.append(attr.replace("valid_", ""))
                 except AttributeError:
                     continue
-        # Delete these so we don't end up carrying around references in our function
+        # Delete these so we don't end up carrying around 
+        # references in our function
         try:
             del tag_attributes
             del cls
@@ -32,17 +56,21 @@ def get_predicate_function(arg):
     attrs = list(set(attrs))
 
     if len(attrs) == 0:
-        print("WARNING: could not find valid class attribute for \"{}\", skipping.".format(arg))
+        print("WARNING: could not find valid class attribute for \"{}\", \ 
+              skipping.".format(arg))
         return lambda t: True
-    
+
+    # Define the predicate function we will use. artrs are scoped into
+    # the closure,  which is sort of the whole point of the 
+    # get_predicate_function function.
     def matchp(t):
         for attr in attrs:
             if attr == "name" and t.name == arg:
-                return True                            
+                return True
             else:
                 try:
                     if getattr(t, attr).lower() == arg.lower():
-                        return True                    
+                        return True
                 except (AttributeError, KeyError):
                     pass
         return False
@@ -50,45 +78,79 @@ def get_predicate_function(arg):
     return matchp
 
 
-def get_document_dict_by_annotator_id(annotator_dirs):
+def get_document_dict_by_system_id(system_dirs):
+    """Takes a list of directories and returns all of the StandoffAnnotation's
+    as a system id, annotation id indexed dictionary. System id (or
+    StandoffAnnotation.sys_id) is whatever values trail the XXX-YY file id.
+    For example:
+       301-01foo.xml
+       patient id:   301
+       document id:  01
+       system id:    foo
+
+    In the case where there is nothing trailing the document id,  the sys_id
+    is the empty string ('').
+    """
     documents = defaultdict(lambda : defaultdict(int))
-    
-    for d in annotator_dirs:
+
+    for d in system_dirs:
         for fn in os.listdir(d):
-            ca = StandoffAnnotation(d + fn)
-            documents[ca.annotator_id][ca.id] = ca
-            
+            sa = StandoffAnnotation(d + fn)
+            documents[sa.sys_id][sa.id] = sa
+
     return documents
 
 
 
-def evaluate(annotator_dirs, gs, verbose=False, filters=None, invert=False, conjunctive=False, phi=False):
-    gold_cas = {}
+def evaluate(system, gs, eval_class, **kwargs):
+    """Evaluate the system by calling the eval_class (either EvaluatePHI or
+    EvaluateCardiacRisk classes) with an annotation id indexed dict of
+    StandoffAnnotation classes for the system(s) and the gold standard outputs.
+    'system' will be a list containing either one file,  or one or more 
+    directories. 'gs' will be a file or a directory.  This function mostly just
+    handles formatting arguments for the eval_class. 
+    """
+    assert eval_class == EvaluatePHI or eval_class == EvaluateCardiacRisk, \
+    "Must pass in EvaluatePHI or EvaluateCardiacRisk classes to evaluate()."
 
-    if os.path.isfile(gs):
+    gold_sa = {}
+
+    # Strip verbose keyword if it exists
+    # verbose is not a keyword to our eval classes
+    # __init__() functions
+    try:
+        verbose = kwargs['verbose']
+        del kwargs['verbose']
+    except KeyError:
+        verbose = False
+
+    # Handle if two files were passed on the command line
+    if os.path.isfile(system[0]) and os.path.isfile(gs):
         gs = StandoffAnnotation(gs)
-        sys = StandoffAnnotation(annotator_dirs[0])
-        if phi:
-            e = EvaluatePHI({sys.id : sys}, {gs.id : gs}, filters=filters, invert=invert, conjunctive=conjunctive)
-        else:
-            e = EvaluateCardiacRisk({sys.id : sys}, {gs.id : gs}, filters=filters, invert=invert, conjunctive=conjunctive)
-            
+        s = StandoffAnnotation(system[0])
+        e = eval_class({s.id : s}, {gs.id : gs}, **kwargs)
         e.print_docs()
-        
-    elif os.path.isdir(gs):
-        for fn in os.listdir(gs):
-            ca = StandoffAnnotation(gs + fn)
-            gold_cas[ca.id] = ca
-    
-        for annotator_id, annotator_cas in get_document_dict_by_annotator_id(annotator_dirs).items():
-            if phi:
-                e = EvaluatePHI(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
-            else:
-                e = EvaluateCardiacRisk(annotator_cas, gold_cas, filters=filters, invert=invert, conjunctive=conjunctive)
 
+    # Handle the case where 'gs' is a directory and 'system' is a 
+    # list of directories.  For individual evaluation (one system output
+    #  against the gold standard) this is a little overkill,  but this
+    # lets us run multiple systems against the gold standard and get numbers
+    # for each system output. useful for annotator agreement and final system
+    # evaluations. Error checking to ensure consistent files in each directory
+    # will be handled by the evaluation class. 
+    elif all([os.path.isdir(s) for s in system]) and os.path.isdir(gs):
+        # Get a dict of gold standoff annotation indexed by id
+        for fn in os.listdir(gs):
+            sa = StandoffAnnotation(gs + fn)
+            gold_sa[sa.id] = sa
+
+        for s_id, system_sa in get_document_dict_by_system_id(system).items():
+            e = eval_class(system_sa, gold_sa, **kwargs)
             e.print_report(verbose=verbose)
+
     else:
-        Exception("Must pass file.xml file.xml  or directory/ directory/ on command line!")
+        Exception("Must pass file.xml file.xml  or [directory/]+ directory/ \
+        on command line!")
 
     return True
 
@@ -96,46 +158,67 @@ def evaluate(annotator_dirs, gs, verbose=False, filters=None, invert=False, conj
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="To Write")
-    
-    subparsers = parser.add_subparsers(dest="subparser", help="To Write")
 
-    
-    subparser_phi = subparsers.add_parser("phi", help="convert a document to different types")
-    
-    subparser_phi.add_argument('--filter', help="Filters to apply,  use with invert and conjunction")
-    subparser_phi.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
-    subparser_phi.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
-    subparser_phi.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
-    subparser_phi.add_argument("--phi", action="store_true")
-    subparser_phi.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
-    subparser_phi.add_argument("to_dir", help="directories to save documents to")
-    
+    sp = parser.add_sps(dest="sp", help="To Write")
 
-    subparser_cr = subparsers.add_parser("cr", help="convert a document to different types")
-    
-    supbarser_cr.add_argument('--filter', help="Filters to apply,  use with invert and conjunction")
-    supbarser_cr.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
-    supbarser_cr.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
-    supbarser_cr.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
-    supbarser_cr.add_argument("--phi", action="store_true")
-    supbarser_cr.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
-    supbarser_cr.add_argument("to_dir", help="directories to save documents to")
-    
+    sp_phi = sp.add_parser("phi",
+                           help="convert a document to different types")
+
+    sp_phi.add_argument('--filter',
+                        help="Filters to apply, use with invert & conjunction")
+    sp_phi.add_argument('--conjunctive',
+                        help="if multiple filters are applied, should these be \
+                        combined with 'and' or 'or'",
+                        action="store_true")
+    sp_phi.add_argument('--invert',
+                        help="Invert the list of filters,  match only tags \
+                        that do not match filter functions",
+                        action="store_true")
+    sp_phi.add_argument('-v', '--verbose',
+                        help="list full document by document scores",
+                        action="store_true")
+    sp_phi.add_argument("from_dirs",
+                        help="directories to pull documents from",
+                        nargs="+")
+    sp_phi.add_argument("to_dir",
+                        help="directories to save documents to")
+
+
+    sp_cr = sps.add_parser("cr",
+                           help="convert a document to different types")
+
+    sp_cr.add_argument('--filter',
+                        help="Filters to apply,  use with invert & conjunction")
+    sp_cr.add_argument('--conjunctive',
+                        help="if multiple filters are applied, should these be \
+                        combined with 'and' or 'or'",
+                        action="store_true")
+    sp_cr.add_argument('--invert',
+                        help="Invert the list of filters,  match only tags \
+                        that do not match filter functions",
+                        action="store_true")
+    sp_cr.add_argument('-v', '--verbose',
+                        help="list full document by document scores",
+                        action="store_true")
+    sp_cr.add_argument("from_dirs",
+                        help="directories to pull documents from",
+                        nargs="+")
+    sp_cr.add_argument("to_dir",
+                        help="directories to save documents to")
 
 
     args = parser.parse_args()
 
 
-    
-    if args.filter:            
-        evaluate(args.from_dirs, args.to_dir, 
+    if args.filter:
+        evaluate(args.from_dirs, args.to_dir,
+                 EvaluatePHI if args.sp == "phi" else EvaluateCardiacRisk,
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
-                 filters=[get_predicate_function(a) for a in  args.filter.split(",")],
-                 phi=args.subparser == "phi")
+                 filters=[get_predicate_function(a)
+                          for a in  args.filter.split(",")])
     else:
-        evaluate(args.from_dirs, args.to_dir, 
-                 verbose=args.verbose,
-                 phi=args.subparser == "phi")
-
+        evaluate(args.from_dirs, args.to_dir,
+                 EvaluatePHI if args.sp == "phi" else EvaluateCardiacRisk,
+                 verbose=args.verbose)
