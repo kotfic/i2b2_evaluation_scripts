@@ -196,6 +196,14 @@ class PHITag(AnnotatorTag):
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
 
 
+    def exact_equals(self, other):
+        pass
+    
+    def overlap_equals(self, other):
+        pass
+
+
+
 class NameTag(PHITag):
     valid_TYPE = [ 'PATIENT','DOCTOR','USERNAME' ]
     attributes = OrderedDict(PHITag.attributes.items())

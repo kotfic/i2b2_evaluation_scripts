@@ -4,6 +4,7 @@ import os
 import numpy
 from collections import defaultdict, OrderedDict
 from tags import *
+import codecs
 
 class bcolors:
     HEADER = '\033[95m'
@@ -256,7 +257,8 @@ class StandoffAnnotation():
     def parse_text_and_tags(self, text=None):
         if text is not None:
             self.raw = text
-
+        
+#        self.raw = codecs.decode(self.raw, 'ISO-8859-1')
         soup = etree.fromstring(self.raw.encode("utf-8"))
         self.root = soup.tag    
 
