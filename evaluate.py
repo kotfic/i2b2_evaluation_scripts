@@ -100,6 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
     parser.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
     parser.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
+    parser.add_argument("--phi", action="store_true")
     parser.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
     parser.add_argument("to_dir", help="directories to save documents to")
     
@@ -110,9 +111,9 @@ if __name__ == "__main__":
                  invert=args.invert,
                  conjunctive=args.conjunctive,
                  filters=[get_predicate_function(a) for a in  args.filter.split(",")],
-                 phi=True)
+                 phi=args.phi)
     else:
         evaluate(args.from_dirs, args.to_dir, 
                  verbose=args.verbose,
-                 phi=True)
+                 phi=args.phi)
 
