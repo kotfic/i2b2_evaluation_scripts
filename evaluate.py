@@ -96,24 +96,46 @@ def evaluate(annotator_dirs, gs, verbose=False, filters=None, invert=False, conj
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="To Write")
-    parser.add_argument('--filter', help="Filters to apply,  use with invert and conjunction")
-    parser.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
-    parser.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
-    parser.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
-    parser.add_argument("--phi", action="store_true")
-    parser.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
-    parser.add_argument("to_dir", help="directories to save documents to")
     
+    subparsers = parser.add_subparsers(dest="subparser", help="To Write")
+
+    
+    subparser_phi = subparsers.add_parser("phi", help="convert a document to different types")
+    
+    subparser_phi.add_argument('--filter', help="Filters to apply,  use with invert and conjunction")
+    subparser_phi.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
+    subparser_phi.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
+    subparser_phi.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
+    subparser_phi.add_argument("--phi", action="store_true")
+    subparser_phi.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
+    subparser_phi.add_argument("to_dir", help="directories to save documents to")
+    
+
+    subparser_cr = subparsers.add_parser("cr", help="convert a document to different types")
+    
+    supbarser_cr.add_argument('--filter', help="Filters to apply,  use with invert and conjunction")
+    supbarser_cr.add_argument('--conjunctive', help="if multiple filters are applied,  should these be combined with 'ands' or 'ors'", action="store_true")
+    supbarser_cr.add_argument('--invert', help="Invert the list in required,  match only tags that do not match values in the required list", action="store_true")    
+    supbarser_cr.add_argument('-v', '--verbose', help="list full document by document scores", action="store_true")
+    supbarser_cr.add_argument("--phi", action="store_true")
+    supbarser_cr.add_argument("from_dirs", help="directories to pull documents from", nargs="+")
+    supbarser_cr.add_argument("to_dir", help="directories to save documents to")
+    
+
+
     args = parser.parse_args()
+
+
+    
     if args.filter:            
         evaluate(args.from_dirs, args.to_dir, 
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
                  filters=[get_predicate_function(a) for a in  args.filter.split(",")],
-                 phi=args.phi)
+                 phi=args.subparser == "phi")
     else:
         evaluate(args.from_dirs, args.to_dir, 
                  verbose=args.verbose,
-                 phi=args.phi)
+                 phi=args.subparser == "phi")
 
