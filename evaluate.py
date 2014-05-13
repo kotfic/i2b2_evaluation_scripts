@@ -1,7 +1,108 @@
 ################################################################################
 ##
+## i2b2 2014 Evaluation Scripts
 ## 
+## This script is distributed as apart of the i2b2 2014 Cardiac Risk and 
+## Personal Healthcare Information (PHI) tasks. It is intended to be used via
+## command line:
 ##
+## $> python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
+##
+##   Where 'cr' produces Percision, Recall and F1 (P/R/F1) measure for the 
+## cardiac risk task and 'phi' produces P/R/F1 for the PHI task. SYSTEM and GOLD 
+## may be individual files representing system output in the case of SYSTEM and
+## the gold standard in the case of GOLD.  SYSTEM and GOLD may also be 
+## directories in which case all files in SYSTEM will be compared to files the 
+## GOLD directory based on their file names. File names MUST be of the form:
+## XXX-YY.xml where XXX is the patient id,  and YY is the document id. See the
+## README.md file for more details. 
+##
+## Basic Flags:
+## -v, --verbose :: Print document by document P/R/F1 for each document instead
+##                  of summary statistics for an entire set of documents.
+##
+## Basic Examples:
+##
+## $> python evaluate.py cr system.xml gold.xml
+##
+##   Evaluate the single system output file 'system.xml' against the gold standard
+## file 'gold.xml' for the Cardiac Risk Task (the 'cr' argument). Please note: 
+## file to file comparisons are made available for testing purposes,  systems
+## output will be evaluated using the "batch" system/ gold/ examples as shown
+## below. 
+##
+## $> python evaluate.py cr system/ gold/
+##
+##   Evaluate the set of system outputs in the folder system/ against the set of
+## gold standard annotations in gold/ using the cardiac risk task evaluation.
+##
+## $> python evaluate.py phi system/ gold/
+##
+##   Evaluate the set of system outputs in the folder system against the set of
+## gold standard annotations in gold/ using the PHI task evaluation.
+##
+##
+##
+## Advanced Usage:
+##
+##   Some additional functionality is made available for testing and error 
+## analysis. This functionality is provided AS IS with the hopes that it will
+## be useful. It should be considered 'experimental' at best, may be bug prone
+## and will not be explicitly supported, though, bug reports and pull requests
+## are welcome.
+##
+## Advanced Flags:
+##
+## --filter [TAG ATTRIBUTES] :: run P/R/F1 measures in either summary or verbose
+##                              mode (see -v) for the list of attributes defined
+##                              by TAG ATTRIBUTES. This may be a comma seperated
+##                              list of tag names and attribute values. For more
+##                              see Advanced Examples.
+## --conjunctive :: If multiple values are passed to filter as a comma seperated
+##                  list, treat them as a series of AND based filters instead of
+##                  a series of OR based filters
+## --invert :: run P/R/F1 on the inverted set of tags defined by TAG ATTRIBUTES
+##             in the --filter tag (see --filter).
+##
+## Advanced Examples:
+##
+## $> python evaluate.py cr --filter MEDICATION system/ gold/ 
+##
+##   Evaluate system output in system/ folder against gold/ folder considering
+## only MEDICATION tags
+##
+## $> python evaluate.py cr --filter CAD,OBESE system/ gold/ 
+##
+##   Evaluate system output in system/ folder against gold/ folder considering
+## only CAD or OBESE tags. Comma seperated lists to the --filter flag are con-
+## joined via OR.
+##
+## $> python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
+##
+##   Evaluate system output in system/ folder against gold/ folder considering
+## only CAD *OR* tags with a time attribute of before DCT. This is probably 
+## not what you want when filtering, see the next example
+##
+## $> python evaluate.py cr --conjunctive \
+##                          --filter "CAD,before DCT" system/ gold/ 
+##
+##   Evaluate system output in system/ folder against gold/ folder considering
+## CAD tags *AND* tags with a time attribute of before DCT.
+##
+## $> python evaluate.py cr --invert \
+##                          --filter MEDICATION system/ gold/
+##
+##  Evaluate system output in system/ folder against gold/ folder considering
+## any tag which is NOT a MEDICATION tag.
+##
+## $> python evaluate.py cr --invert \
+##                          --conjunctive \
+##                          --filter "CAD,before DCT" system/ gold/ 
+##
+##  Evaluate system output in system/ folder against gold/ folder considering
+## any tag which is NOT CAD and with a time attribute of 'before DCT'
+
+
 
 from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 import argparse
@@ -56,8 +157,8 @@ def get_predicate_function(arg):
     attrs = list(set(attrs))
 
     if len(attrs) == 0:
-        print("WARNING: could not find valid class attribute for \"{}\", \ 
-              skipping.".format(arg))
+        print("WARNING: could not find valid class attribute for " +
+              "\"{}\", + skipping.".format(arg))
         return lambda t: True
 
     # Define the predicate function we will use. artrs are scoped into
@@ -159,7 +260,7 @@ def evaluate(system, gs, eval_class, **kwargs):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="To Write")
 
-    sp = parser.add_sps(dest="sp", help="To Write")
+    sp = parser.add_subparsers(dest="sp", help="To Write")
 
     sp_phi = sp.add_parser("phi",
                            help="convert a document to different types")
@@ -184,7 +285,7 @@ if __name__ == "__main__":
                         help="directories to save documents to")
 
 
-    sp_cr = sps.add_parser("cr",
+    sp_cr = sp.add_parser("cr",
                            help="convert a document to different types")
 
     sp_cr.add_argument('--filter',
