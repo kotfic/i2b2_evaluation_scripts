@@ -3,12 +3,12 @@
 ## i2b2 2014 Evaluation Scripts
 ## 
 ## This script is distributed as apart of the i2b2 2014 Cardiac Risk and 
-## Personal Healthcare Information (PHI) tasks. It is intended to be used via
+## Personal Health-care Information (PHI) tasks. It is intended to be used via
 ## command line:
 ##
 ## $> python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
 ##
-##   Where 'cr' produces Percision, Recall and F1 (P/R/F1) measure for the 
+##   Where 'cr' produces Precision, Recall and F1 (P/R/F1) measure for the 
 ## cardiac risk task and 'phi' produces P/R/F1 for the PHI task. SYSTEM and GOLD 
 ## may be individual files representing system output in the case of SYSTEM and
 ## the gold standard in the case of GOLD.  SYSTEM and GOLD may also be 
@@ -55,10 +55,10 @@
 ##
 ## --filter [TAG ATTRIBUTES] :: run P/R/F1 measures in either summary or verbose
 ##                              mode (see -v) for the list of attributes defined
-##                              by TAG ATTRIBUTES. This may be a comma seperated
+##                              by TAG ATTRIBUTES. This may be a comma separated
 ##                              list of tag names and attribute values. For more
 ##                              see Advanced Examples.
-## --conjunctive :: If multiple values are passed to filter as a comma seperated
+## --conjunctive :: If multiple values are passed to filter as a comma separated
 ##                  list, treat them as a series of AND based filters instead of
 ##                  a series of OR based filters
 ## --invert :: run P/R/F1 on the inverted set of tags defined by TAG ATTRIBUTES
@@ -74,7 +74,7 @@
 ## $> python evaluate.py cr --filter CAD,OBESE system/ gold/ 
 ##
 ##   Evaluate system output in system/ folder against gold/ folder considering
-## only CAD or OBESE tags. Comma seperated lists to the --filter flag are con-
+## only CAD or OBESE tags. Comma separated lists to the --filter flag are con-
 ## joined via OR.
 ##
 ## $> python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
