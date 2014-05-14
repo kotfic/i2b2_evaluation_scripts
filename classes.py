@@ -306,6 +306,51 @@ class Evaluate(object):
             self.filters = filters
 
 
+        assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
+            "More than one annotator ID in this set of Annotations!"
+        
+        self.sys_id = annotator_cas.values()[0].sys_id
+        
+        
+        for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
+            if filters != None:
+            # Get all doc tags for each tag that passes all the 
+            # predicate functions in filters
+                if conjunctive:
+                    if invert:
+                        gold = set([t for t in self.get_tagset(gold_cas[doc_id]) 
+                                    if not all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in self.get_tagset(annotator_cas[doc_id]) 
+                                      if not all( [f(t) for f in self.filters] )])
+                    else:
+                        gold = set([t for t in self.get_tagset(gold_cas[doc_id]) 
+                                    if all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in self.get_tagset(annotator_cas[doc_id]) 
+                                      if all( [f(t) for f in self.filters] )])
+                else:
+                    if invert:
+                        gold = set([t for t in self.get_tagset(gold_cas[doc_id]) 
+                                    if not any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in self.get_tagset(annotator_cas[doc_id]) 
+                                      if not any( [f(t) for f in self.filters] )])
+                    else:
+                        gold = set([t for t in self.get_tagset(gold_cas[doc_id]) 
+                                    if any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in self.get_tagset(annotator_cas[doc_id]) 
+                                      if any( [f(t) for f in self.filters] )])
+                    
+            else:
+                gold = set(self.get_tagset(gold_cas[doc_id]))
+                system = set(self.get_tagset(annotator_cas[doc_id]))
+
+            self.tp.append(gold.intersection(system))
+            self.fp.append(system - gold)
+            self.fn.append(gold - system)
+            self.doc_ids.append(doc_id)
+
+
+
+
 
     @staticmethod
     def recall(tp, fn):    
@@ -430,106 +475,17 @@ class Evaluate(object):
         self._print_summary()
 
 
+    def get_tagset(self, annotation):
+        raise Exception("Must be implemented by Subclass!")
+
 
 
 class EvaluatePHI(Evaluate):
-    def __init__(self, annotator_cas, gold_cas, 
-                 filters=None, conjunctive=False, invert=False):
-        super(EvaluatePHI, self).__init__(annotator_cas, gold_cas, 
-                                          filters=filters, 
-                                          conjunctive=conjunctive, 
-                                          invert=invert)
-
-        assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
-            "More than one annotator ID in this set of Annotations!"
-        
-        self.sys_id = annotator_cas.values()[0].sys_id
-        
-        
-        for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
-            if filters != None:
-            # Get all doc tags for each tag that passes all the 
-            # predicate functions in filters
-                if conjunctive:
-                    if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() 
-                                    if not all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() 
-                                      if not all( [f(t) for f in self.filters] )])
-                    else:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() 
-                                    if all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() 
-                                      if all( [f(t) for f in self.filters] )])
-                else:
-                    if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() 
-                                    if not any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() 
-                                      if not any( [f(t) for f in self.filters] )])
-                    else:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() 
-                                    if any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() 
-                                      if any( [f(t) for f in self.filters] )])
-                    
-            else:
-                gold = set(gold_cas[doc_id].get_phi())
-                system = set(annotator_cas[doc_id].get_phi())
-
-            self.tp.append(gold.intersection(system))
-            self.fp.append(system - gold)
-            self.fn.append(gold - system)
-            self.doc_ids.append(doc_id)
+    def get_tagset(self, annotation):
+        return annotation.get_phi()
 
 
 
 class EvaluateCardiacRisk(Evaluate):
-    def __init__(self, annotator_cas, gold_cas, 
-                 filters=None, conjunctive=False, invert=False):
-        super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, 
-                                                  filters=filters, 
-                                                  conjunctive=conjunctive, 
-                                                  invert=invert)
-        
-        assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
-            "More than one annotator ID in this set of Annotations!"
-
-        self.sys_id = annotator_cas.values()[0].sys_id
-        
-        
-        for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
-            if filters != None:
-            # Get all doc tags for each tag that passes all the 
-            # predicate functions in filters
-                if conjunctive:
-                    if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
-                                    if not all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
-                                      if not all( [f(t) for f in self.filters] )])
-                    else:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
-                                    if all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
-                                      if all( [f(t) for f in self.filters] )])
-                else:
-                    if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
-                                    if not any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
-                                      if not any( [f(t) for f in self.filters] )])
-                    else:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
-                                    if any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
-                                      if any( [f(t) for f in self.filters] )])
-                    
-            else:
-                gold = set(gold_cas[doc_id].get_doc_tags())
-                system = set(annotator_cas[doc_id].get_doc_tags())
-
-            self.tp.append(gold.intersection(system))
-            self.fp.append(system - gold)
-            self.fn.append(gold - system)
-            self.doc_ids.append(doc_id)
+    def get_tagset(self, annotation):
+        return annotation.get_doc_tags() 
