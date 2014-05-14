@@ -1,7 +1,12 @@
-from lxml import etree
-from collections import OrderedDict
-
-###############
+################################################################################
+##  
+##      This file manages all tag related classes and encapsulates much of the 
+##    functionality that the rest of this evaluation script works off of. 
+##    It is based on a class hierarchy and most of the tag specific information
+##    is contained in tag specific class attributes. This has the advantage of 
+##    allowing us to validate tag information as it comes into,  and is saved
+##    out of objects instantiated from these classes.
+##
 ##    Class hierarchy reference
 ##
 ##    [+]Tag
@@ -26,22 +31,16 @@ from collections import OrderedDict
 ##          [+]FamilyHistTag
 ##          [+]SmokerTag
 
-
-class MalformedTagException(Exception):
-    pass
-
-class InvalidAttributException(Exception):
-    pass
-
-def isint(value):
-    try:
-        return int(value)
-    except:
-        return False
-
+from lxml import etree
+from collections import OrderedDict
 
 
 class Tag(object):
+    """ Base Tag object,  implements conversion of lxml element.tag to self.name
+    implements 'magic' functions like __eq__ and __hash__ based on the _get_key
+    function. Also defines functions for converting tags to different formats
+    like back to lxml Element classes and to just plain attribute dictionaries.
+    """
     attributes = OrderedDict()
 
     def __init__(self, element):
@@ -86,16 +85,21 @@ class Tag(object):
                     element.attrib[k] = getattr(self, k)
                 else:
                     element.attrib[k] = getattr(self, k)
-                    print("WARNING: Expected attribute '%s' for tag %s was not valid ('%s')" % (k, "<%s (%s)>" % (self.name, self.id), getattr(self, k)))
+                    print("WARNING: Expected attribute '%s' for tag %s was " \
+                          "not valid ('%s')" % (k, "<%s (%s)>" % (self.name, 
+                                                                  self.id), 
+                                                getattr(self, k)))
             except AttributeError:
                 if k in self.key:
                     element.attrib[k] = ''
-                    print("WARNING: Expected attribute '%s' for tag %s" % (k, "<%s, %s>" % (self.name, self.id)))
+                    print("WARNING: Expected attribute '%s' for tag %s" % 
+                          (k, "<%s, %s>" % (self.name, self.id)))
 
         return element
 
     def __repr__(self):
-        return "<{0}: {1}>".format(self.__class__.__name__, ", ".join(self._get_key()))
+        return "<{0}: {1}>".format(self.__class__.__name__, 
+                                   ", ".join(self._get_key()))
 
 
     def toXML(self):
@@ -118,6 +122,11 @@ class Tag(object):
 
 
 class AnnotatorTag(Tag):
+    """ Defines the tags that model the general tags produced by annotators.
+    AnnotatorTag also implements the functions that convert an annotator tag
+    to a DocumentTag - a tag designed to annotate document level information
+    rather than specific positional information.
+    """
     attributes = OrderedDict()
     attributes["id"] = lambda v: True
     attributes["docid"] = lambda v: True
@@ -131,7 +140,9 @@ class AnnotatorTag(Tag):
 
     def __repr__(self):
         try:
-            return "<{0}: {1} s:{2} e:{3}>".format(self.__class__.__name__, ", ".join(self._get_key()), self.start, self.end )
+            return "<{0}: {1} s:{2} e:{3}>".format(self.__class__.__name__, 
+                                                   ", ".join(self._get_key()), 
+                                                   self.start, self.end )
         except AttributeError:
             return super(Tag, self).__repr__()
 
@@ -147,10 +158,15 @@ class AnnotatorTag(Tag):
                     setattr(self, k, element.attrib[k])
                 else:
                     
-                    print("WARNING: Expected attribute '%s' for xml element <%s (%s)>  was not valid ('%s')" % (k, element.tag, element.attrib['id'], element.attrib[k]) )
+                    print("WARNING: Expected attribute '%s' for xml element " \
+                          "<%s (%s)>  was not valid ('%s')" % (k, element.tag, 
+                                                         element.attrib['id'], 
+                                                         element.attrib[k]) )
                     setattr(self, k, element.attrib[k])
             elif k in self.key:
-                print("WARNING: Expected attribute '%s' for xml element <%s ('%s')>, setting to ''" % (k, element.tag, element.attrib['id']) )
+                print("WARNING: Expected attribute '%s' for xml element " \ 
+                      "<%s ('%s')>, setting to ''" % (k, element.tag, 
+                                                      element.attrib['id']) )
                 setattr(self, k, '')
 
     def validate(self):
@@ -189,7 +205,12 @@ class AnnotatorTag(Tag):
 
 
 class PHITag(AnnotatorTag):
-    valid_TYPE = "PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM", "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY", "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE", "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN", "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE", "VEHICLE", "DEVICE", "BIOID", "IDNUM"
+    valid_TYPE = ["PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM", 
+                  "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY", 
+                  "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE", 
+                  "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN", 
+                  "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE", 
+                  "VEHICLE", "DEVICE", "BIOID", "IDNUM"]
     attributes = OrderedDict(AnnotatorTag.attributes.items())
     attributes['TYPE'] = lambda v: v in PHITag.valid_TYPE
 
@@ -216,7 +237,8 @@ class ProfessionTag(PHITag):
     attributes['TYPE'] = lambda v: v in ProfessionTag.valid_TYPE
 
 class LocationTag(PHITag):
-    valid_TYPE = ['ROOM','DEPARTMENT','HOSPITAL','ORGANIZATION','STREET','CITY','STATE','COUNTRY','ZIP','LOCATION-OTHER']
+    valid_TYPE = ['ROOM','DEPARTMENT','HOSPITAL','ORGANIZATION','STREET',
+                  'CITY','STATE','COUNTRY','ZIP','LOCATION-OTHER']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in LocationTag.valid_TYPE
 
@@ -236,7 +258,8 @@ class ContactTag(PHITag):
     attributes['TYPE'] = lambda v: v in ContactTag.valid_TYPE
 
 class IDTag(PHITag):
-    valid_TYPE = ['SSN','MEDICALRECORD','HEALTHPLAN','ACCOUNT','LICENSE','VEHICLE','DEVICE','BIOID','IDNUM']
+    valid_TYPE = ['SSN','MEDICALRECORD','HEALTHPLAN','ACCOUNT',
+                  'LICENSE','VEHICLE','DEVICE','BIOID','IDNUM']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in IDTag.valid_TYPE
 
@@ -270,12 +293,13 @@ class FamilyHistTag(AnnotatorTag):
     key = AnnotatorTag.key + ["indicator"]
 
     def __init__(self, element):
-        # FAMILY_HIST tags do not (by design) have an indicator tag before cleaning
-        # However we require an indicator to be a valid tag after cleaning,  this causes
-        # some unfortunate hacking here to ensure that an indicator tag is present before
-        # any validation happens.
+        # FAMILY_HIST tags do not (by design) have an indicator tag before 
+        # cleaning.  However we require an indicator to be a valid tag after 
+        # cleaning,  this causes some unfortunate hacking here to ensure that 
+        # an indicator tag is present before any validation happens.
         try:
-            if int(element.attrib['start'] ) != -1 and int(element.attrib['end']) != -1:
+            if int(element.attrib['start'] ) != -1 and \
+               int(element.attrib['end']) != -1:
                 element.attrib['indicator'] = "present"
             else:
                 element.attrib['indicator'] = "not present"
@@ -358,8 +382,16 @@ class ObeseTag(DiseaseTag):
 
 
 class MedicationTag(DiseaseTag):
-    valid_type1 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", "aspirin", "beta blocker", "calcium channel blocker", "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", "insulin", "metformin", "niacin", "nitrate", "statin", "sulfonylureas", "thiazolidinedione", "thienopyridine" ]
-    valid_type2 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", "aspirin", "beta blocker", "calcium channel blocker", "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", "insulin", "metformin", "niacin", "nitrate", "statin", "sulfonylureas", "thiazolidinedione", "thienopyridine", "" ]
+    valid_type1 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", 
+                    "aspirin", "beta blocker", "calcium channel blocker", 
+                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", 
+                    "insulin", "metformin", "niacin", "nitrate", "statin", 
+                    "sulfonylureas", "thiazolidinedione", "thienopyridine" ]
+    valid_type2 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", 
+                    "aspirin", "beta blocker", "calcium channel blocker", 
+                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", 
+                    "insulin", "metformin", "niacin", "nitrate", "statin", 
+                    "sulfonylureas", "thiazolidinedione", "thienopyridine", "" ]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["type1"] = lambda v: v.lower() in MedicationTag.valid_type1
@@ -371,6 +403,10 @@ class MedicationTag(DiseaseTag):
 
 
 class DocumentTag(Tag):
+    """ This type of tag models document level annotations that have been
+    compiled based on sufficient annotator evidence.  It is unlike an
+    AnnotatorTag and so inherits directly from the Tag class.
+    """
     tag_types = {"DIABETES" : DiabetesTag,
                  "CAD" : CADTag,
                  "HYPERTENSION" : HypertensionTag,
@@ -423,9 +459,6 @@ PHI_TAG_CLASSES = [NameTag,
                    IDTag,   
                    OtherTag]
 
-# Comment should be last in tag order,  so add it down here
-# that way all other sub tags have had their attributes set first
-# This also provides the MEDICAL_TAG_CLASSES list.
 MEDICAL_TAG_CLASSES = [FamilyHistTag,
                        SmokerTag,
                        DiseaseTag,
@@ -436,5 +469,9 @@ MEDICAL_TAG_CLASSES = [FamilyHistTag,
                        ObeseTag,
                        MedicationTag]
 
+
+# Comment should be last in tag order,  so add it down here
+# that way all other sub tags have had their attributes set first
+# This also provides the MEDICAL_TAG_CLASSES list.
 for c in MEDICAL_TAG_CLASSES + PHI_TAG_CLASSES:
     c.attributes["comment"] = lambda v: True
