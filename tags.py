@@ -120,6 +120,12 @@ class Tag(object):
         return d
 
 
+def isint(x):
+    try:
+        int(x); return True
+    except ValueError:
+        return False
+
 
 class AnnotatorTag(Tag):
     """ Defines the tags that model the general tags produced by annotators.
@@ -164,7 +170,7 @@ class AnnotatorTag(Tag):
                                                          element.attrib[k]) )
                     setattr(self, k, element.attrib[k])
             elif k in self.key:
-                print("WARNING: Expected attribute '%s' for xml element " \ 
+                print("WARNING: Expected attribute '%s' for xml element " \
                       "<%s ('%s')>, setting to ''" % (k, element.tag, 
                                                       element.attrib['id']) )
                 setattr(self, k, '')

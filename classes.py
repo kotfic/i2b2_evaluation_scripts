@@ -6,22 +6,6 @@ from collections import defaultdict, OrderedDict
 from tags import *
 import codecs
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-
-    def disable(self):
-        self.HEADER = ''
-        self.OKBLUE = ''
-        self.OKGREEN = ''
-        self.WARNING = ''
-        self.FAIL = ''
-        self.ENDC = ''
-
 
 
 class StandoffAnnotation():
@@ -44,9 +28,13 @@ class StandoffAnnotation():
 
         if file_name:
             if self.id_parser.match(os.path.basename(file_name)):
-                self.patient_id, self.record_id, self.sys_id = self.id_parser.match(os.path.basename(file_name)).groups()
+                self.patient_id, \
+                self.record_id, \
+                self.sys_id = self.id_parser.match(os.path.basename(file_name))\
+                                            .groups()
             else:
-                self.patient_id = os.path.splitext(os.path.basename(file_name))[0]
+                self.patient_id = os.path.splitext(os.path \
+                                                   .basename(file_name))[0]
         else:
             self.patient_id = None
 
@@ -67,12 +55,6 @@ class StandoffAnnotation():
         return self.id == other.id and other.id == self.id
 
 
-    def squish(self,positions):
-        """Squish a serise of potentially overlapping start/end positions 
-        into a list of non overlapping start/end positions. Behavior of merging
-        different types is undefined. As in- it probably doesn't do what you want."""
-
-
     def get_annotation_tag_color(self, name):
         tag_colors = {"DIABETES" : ('\033[31m','\033[0m'),
                       "CAD" : ('\033[31m','\033[0m'),
@@ -90,11 +72,12 @@ class StandoffAnnotation():
 
 
     def get_annotator_marked_text(self):
-        """ Go through marking the entire text with color codes used to identify different
-        Types of Human annotations"""
+        """ Go through marking the entire text with color codes used to 
+        identify different types of human annotations."""
         text = self.get_text()
         
-        # This should ensure we have eliminated any overlapping positions information
+        # This should ensure we have eliminated any overlapping positions 
+        # information
         positions = []
         for tag in self.get_tags():
             if hasattr(tag, "start") and hasattr(tag, "end"):
@@ -117,14 +100,18 @@ class StandoffAnnotation():
         concat.append((last_start,last_end, t))
 
         # return the text
-        for start, end, tag in sorted(concat, key=lambda x: x[0], reverse=True):
+        for start,end,tag in sorted(concat, key=lambda x: x[0], reverse=True):
             open_str, close_str  = self.get_annotation_tag_color(tag.name)
-            text = text[:start] + open_str + text[start:end] + close_str + text[end:]
+            text = text[:start] + open_str + \
+                   text[start:end] + close_str + text[end:]
 
         return text
 
     
-    def toElement(self, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True):
+    def toElement(self, with_phi_tags=True, 
+                  with_annotator_tags=True, 
+                  with_doc_level=True):
+
         root = etree.Element(self.root)
         text = etree.SubElement(root, "TEXT")
         tags = etree.SubElement(root, "TAGS")
@@ -133,10 +120,11 @@ class StandoffAnnotation():
         if with_doc_level:
             for t in self.doc_tags:                
                 try:
-                    tags.append(t.toElement(with_annotator_tags=with_annotator_tags))
-                # MAE convertion throws all tags into doc_tags, because regular tags don't
-                # have the with_annotator_tags argument we need to catch and append the regular
-                # tag here.
+                    tags.append(t.toElement(with_annotator_tags \
+                                            = with_annotator_tags))
+                # MAE convertion throws all tags into doc_tags, because regular
+                # tags don't have the with_annotator_tags argument we need to 
+                # catch and append the regular tag here.
                 except TypeError:
                     tags.append(t.toElement())
         elif with_annotator_tags and not with_doc_level:
@@ -150,7 +138,10 @@ class StandoffAnnotation():
     
         return root
 
-    def toListOfDicts(self, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True, attrs=None):
+    def toListOfDicts(self, with_phi_tags=True, 
+                      with_annotator_tags=True, 
+                      with_doc_level=True, 
+                      attrs=None):
         tag_list = []
         for t in self.get_doc_tags():
             if with_doc_level:
@@ -166,17 +157,31 @@ class StandoffAnnotation():
             
         
 
-    def toXML(self, pretty_print=True, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True):
-        return etree.tostring(self.toElement(with_phi_tags=with_phi_tags, 
-                                             with_annotator_tags=with_annotator_tags,
-                                             with_doc_level=with_doc_level), 
+    def toXML(self, **kwargs):
+        
+        pretty_print = kwargs.pop("pretty_print", True)
+        
+        return etree.tostring(self.toElement(**kwargs), 
                               pretty_print=pretty_print, 
                               xml_declaration=True, encoding='UTF-8')
 
-    def save(self, path=None, pretty_print=True, with_phi_tags=True, with_annotator_tags=True, with_doc_level=True):
-        if not path:
-            path = self.file_name
-            
+    def save(self, **kwargs):
+        """ Save the standoff annotation to either self.file_name or to a 
+        file defined by the key word argument "path." Accepts
+          path
+          pretty_print
+          with_phi_tags
+          with_annotator_tags
+          with_doc_level
+        keyword arguments. and passes those on to toXML before writing to
+        file. 
+        """
+
+        path = kwargs.pop("path",self.file_name)
+
+        if "pretty_print" not in kwargs:
+            kwargs["pretty_print"] = True
+
         if not os.path.exists(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
 
@@ -184,26 +189,22 @@ class StandoffAnnotation():
         # We remove all leading whitespace from tags, this could potentially
         # introduce bugs if information in the <TEXT></TEXT> element starts with
         # whitespace and the first character is a '<'
-        if pretty_print == "MAE":
-            xml = self.toXML(pretty_print=pretty_print, 
-                             with_phi_tags=with_phi_tags, 
-                             with_annotator_tags=with_annotator_tags,
-                             with_doc_level=with_doc_level)
+        if kwargs['pretty_print'] == "MAE":
+            xml = self.toXML(**kwargs)
             
             with open(path, "w") as h:
-                h.writelines([re.sub("^\s+<", "<", l + "\n") for l in xml.split("\n")])
+                h.writelines([re.sub("^\s+<", "<", l + "\n") 
+                              for l in xml.split("\n")])
 
         else:
             with open(path, "w") as h:
-                h.write(self.toXML(pretty_print=pretty_print, 
-                                   with_phi_tags=with_phi_tags, 
-                                   with_annotator_tags=with_annotator_tags,
-                                   with_doc_level=with_doc_level))
+                h.write(self.toXML(**kwargs))
         
         return True
     
     def __repr__(self):
-        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" % (self.sys_id, self.id, len(self.get_tags()), len(self.get_phi()))
+        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" \
+        % (self.sys_id, self.id, len(self.get_tags()), len(self.get_phi()))
 
     def get_filename(self):
         return self.file_name
@@ -252,13 +253,13 @@ class StandoffAnnotation():
             return self.tags
 
     def get_sorted_tags(self,reverse=False):
-        return sorted(self.get_tags(), key=lambda tag: tag.get_start(), reverse=reverse)
+        return sorted(self.get_tags(), key=\
+                      lambda tag: tag.get_start(), reverse=reverse)
 
     def parse_text_and_tags(self, text=None):
         if text is not None:
             self.raw = text
         
-#        self.raw = codecs.decode(self.raw, 'ISO-8859-1')
         soup = etree.fromstring(self.raw.encode("utf-8"))
         self.root = soup.tag    
 
@@ -268,7 +269,8 @@ class StandoffAnnotation():
             self.text = None
 
             
-        # Handles files where PHI, and Annotator Tags are all just stuffed into tag element
+        # Handles files where PHI, and AnnotatorTags are all just 
+        # stuffed into tag element.
         for t, cls in PHITag.tag_types.items():
             if len(soup.find("TAGS").findall(t)):
                 for element in soup.find("TAGS").findall(t):
@@ -278,7 +280,8 @@ class StandoffAnnotation():
         for t, cls in DocumentTag.tag_types.items():
             if len(soup.find("TAGS").findall(t)):
                 for element in soup.find("TAGS").findall(t):
-                    if "start" in element.attrib.keys() or "end" in element.attrib.keys():
+                    if "start" in element.attrib.keys() or \
+                       "end" in element.attrib.keys():
                         self.tags.append(cls(element))
                     else:
                         self.doc_tags.append(DocumentTag(element))
@@ -287,7 +290,8 @@ class StandoffAnnotation():
 
 
 class Evaluate(object):
-    def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
+    def __init__(self, annotator_cas, gold_cas, 
+                 filters=None, conjunctive=False, invert=False):
         self.tp = []
         self.fp = []
         self.fn = []
@@ -325,23 +329,29 @@ class Evaluate(object):
             return 0.0
 
     def macro_recall(self, tp, fn):
-        np = numpy.array([Evaluate.recall(tp, fn) for tp,fn in zip(self.tp, self.fn)])
+        np = numpy.array([Evaluate.recall(tp, fn) 
+                          for tp,fn in zip(self.tp, self.fn)])
         return (np.mean(), np.std())
 
     def macro_precision(self, tp, fp):
-        np = numpy.array([Evaluate.precision(tp, fp) for tp,fp in zip(self.tp, self.fp)])
+        np = numpy.array([Evaluate.precision(tp, fp) 
+                          for tp,fp in zip(self.tp, self.fp)])
         return (np.mean(), np.std())
 
 
     def micro_recall(self, tp, fn):
         try:
-            return sum([len(t) for t in self.tp]) / float(sum([len(t) for t in self.tp]) + sum([len(t) for t in self.fn]))
+            return sum([len(t) for t in self.tp]) /  \
+                float(sum([len(t) for t in self.tp]) +
+                      sum([len(t) for t in self.fn]))
         except ZeroDivisionError:
             return 0.0
 
     def micro_precision(self, tp, fp):
         try:
-            return sum([len(t) for t in self.tp]) / float(sum([len(t) for t in self.tp]) + sum([len(t) for t in self.fp]))
+            return sum([len(t) for t in self.tp]) /  \
+                float(sum([len(t) for t in self.tp]) + 
+                      sum([len(t) for t in self.fp]))
         except ZeroDivisionError:
             return 0.0
 
@@ -351,14 +361,26 @@ class Evaluate(object):
         for i,doc_id in enumerate(self.doc_ids):
             mp = Evaluate.precision(self.tp[i], self.fp[i])
             mr = Evaluate.recall(self.tp[i], self.fn[i])
-            print("{:<15}{:<15}{:<15}{:<20}".format(doc_id, "Precision", "", "{:.4}".format(mp)))
-            print("{:<15}{:<15}{:<15}{:<20}".format("[{}({}){}]".format(len(self.tp[i]) + len(self.fn[i]), 
-                                                                          len(self.tp[i]),
-                                                                          len(self.tp[i]) + len(self.fp[i])),     
-                                                    "Recall",    
-                                                    "", 
-                                                    "{:.4}".format(mr)))
-            print("{:<15}{:<15}{:<15}{:<20}".format("",     "F1",        "", "{:.4}".format(Evaluate.F_beta(mp, mr))))
+            str_fmt = "{:<15}{:<15}{:<15}{:<20}"
+
+            print(str_fmt.format(doc_id, 
+                                 "Precision", "", 
+                                 "{:.4}".format(mp)))
+
+            print(str_fmt.format("[{}({}){}]".format(len(self.tp[i]) + 
+                                                     len(self.fn[i]), 
+                                                     len(self.tp[i]),
+                                                     len(self.tp[i]) + 
+                                                     len(self.fp[i])),
+                                 "Recall",    
+                                 "", 
+                                 "{:.4}".format(mr)))
+
+            print(str_fmt.format("",     
+                                 "F1",        
+                                 "", 
+                                 "{:.4}".format(Evaluate.F_beta(mp, mr))))
+
             print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
 
 
@@ -369,11 +391,28 @@ class Evaluate(object):
         mp = self.micro_precision(self.tp, self.fp)
         mr = self.micro_recall(self.tp, self.fn)
 
-        print("{:<15}{:<15}{:<15}{:<20}".format(self.sys_id + " ({})".format(len(self.doc_ids)), "Measure", "Macro (SD)", "Micro") )
+        str_fmt = "{:<15}{:<15}{:<15}{:<20}"
+
+        print(str_fmt.format(self.sys_id + 
+                             " ({})".format(len(self.doc_ids)), 
+                             "Measure", "Macro (SD)", "Micro") )
+
         print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
-        print("{:<15}{:<15}{:<15}{:<20}".format("Total", "Precision", "{:.4} ({:.2})".format(Mp, Mp_std),      "{:.4}".format(mp)))
-        print("{:<15}{:<15}{:<15}{:<20}".format("",      "Recall",    "{:.4} ({:.2})".format(Mr, Mr_std),      "{:.4}".format(mr)))
-        print("{:<15}{:<15}{:<15}{:<20}".format("",      "F1",        "{:.4}".format(Evaluate.F_beta(Mp, Mr)), "{:.4}".format(Evaluate.F_beta(mr, mp))))
+
+        print(str_fmt.format("Total", 
+                             "Precision", 
+                             "{:.4} ({:.2})".format(Mp, Mp_std),      
+                             "{:.4}".format(mp)))
+
+        print(str_fmt.format("",      
+                             "Recall",    
+                             "{:.4} ({:.2})".format(Mr, Mr_std),      
+                             "{:.4}".format(mr)))
+
+        print(str_fmt.format("",      
+                             "F1",        
+                             "{:.4}".format(Evaluate.F_beta(Mp, Mr)), 
+                             "{:.4}".format(Evaluate.F_beta(mr, mp))))
         print("\n")
 
     def print_docs(self):
@@ -394,8 +433,12 @@ class Evaluate(object):
 
 
 class EvaluatePHI(Evaluate):
-    def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
-        super(EvaluatePHI, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
+    def __init__(self, annotator_cas, gold_cas, 
+                 filters=None, conjunctive=False, invert=False):
+        super(EvaluatePHI, self).__init__(annotator_cas, gold_cas, 
+                                          filters=filters, 
+                                          conjunctive=conjunctive, 
+                                          invert=invert)
 
         assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"
@@ -405,21 +448,30 @@ class EvaluatePHI(Evaluate):
         
         for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
             if filters != None:
-            # Get all doc tags for each tag that passes all the predicate functions in filters
+            # Get all doc tags for each tag that passes all the 
+            # predicate functions in filters
                 if conjunctive:
                     if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() if not all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() if not all( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() 
+                                    if not all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() 
+                                      if not all( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() if all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() if all( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() 
+                                    if all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() 
+                                      if all( [f(t) for f in self.filters] )])
                 else:
                     if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() if not any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() if not any( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() 
+                                    if not any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() 
+                                      if not any( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gold_cas[doc_id].get_phi() if any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_phi() if any( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_phi() 
+                                    if any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_phi() 
+                                      if any( [f(t) for f in self.filters] )])
                     
             else:
                 gold = set(gold_cas[doc_id].get_phi())
@@ -433,31 +485,45 @@ class EvaluatePHI(Evaluate):
 
 
 class EvaluateCardiacRisk(Evaluate):
-    def __init__(self, annotator_cas, gold_cas, filters=None, conjunctive=False, invert=False):
-        super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, filters=filters, conjunctive=conjunctive, invert=invert)
+    def __init__(self, annotator_cas, gold_cas, 
+                 filters=None, conjunctive=False, invert=False):
+        super(EvaluateCardiacRisk, self).__init__(annotator_cas, gold_cas, 
+                                                  filters=filters, 
+                                                  conjunctive=conjunctive, 
+                                                  invert=invert)
         
         assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"
+
         self.sys_id = annotator_cas.values()[0].sys_id
         
         
         for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
             if filters != None:
-            # Get all doc tags for each tag that passes all the predicate functions in filters
+            # Get all doc tags for each tag that passes all the 
+            # predicate functions in filters
                 if conjunctive:
                     if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if not all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() if not all( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
+                                    if not all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
+                                      if not all( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if all( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() if all( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
+                                    if all( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
+                                      if all( [f(t) for f in self.filters] )])
                 else:
                     if invert:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if not any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() if not any( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
+                                    if not any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
+                                      if not any( [f(t) for f in self.filters] )])
                     else:
-                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() if any( [f(t) for f in self.filters] ) ])
-                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() if any( [f(t) for f in self.filters] )])
+                        gold = set([t for t in gold_cas[doc_id].get_doc_tags() 
+                                    if any( [f(t) for f in self.filters] ) ])
+                        system = set([t for t in annotator_cas[doc_id].get_doc_tags() 
+                                      if any( [f(t) for f in self.filters] )])
                     
             else:
                 gold = set(gold_cas[doc_id].get_doc_tags())
