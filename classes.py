@@ -407,7 +407,7 @@ class Evaluate(object):
         for i,doc_id in enumerate(self.doc_ids):
             mp = Evaluate.precision(self.tp[i], self.fp[i])
             mr = Evaluate.recall(self.tp[i], self.fn[i])
-            str_fmt = "{:<15}{:<15}{:<15}{:<20}"
+            str_fmt = "{:<25}{:<15}{:<15}{:<20}"
 
             print(str_fmt.format(doc_id, 
                                  "Precision", "", 
@@ -427,7 +427,7 @@ class Evaluate(object):
                                  "", 
                                  "{:.4}".format(Evaluate.F_beta(mp, mr))))
 
-            print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
+            print("{:-<25}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
 
 
 
@@ -437,13 +437,13 @@ class Evaluate(object):
         mp = self.micro_precision(self.tp, self.fp)
         mr = self.micro_recall(self.tp, self.fn)
 
-        str_fmt = "{:<15}{:<15}{:<15}{:<20}"
+        str_fmt = "{:<25}{:<15}{:<15}{:<20}"
 
         print(str_fmt.format(self.sys_id + 
                              " ({})".format(len(self.doc_ids)), 
                              "Measure", "Macro (SD)", "Micro") )
 
-        print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
+        print("{:-<25}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
 
         print(str_fmt.format("Total", 
                              "Precision", 
@@ -463,8 +463,8 @@ class Evaluate(object):
 
     def print_docs(self):
         print("Report for {}:".format(self.sys_id))
-        print("{:<15}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro") )
-        print("{:-<15}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
+        print("{:<25}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro") )
+        print("{:-<25}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
         self._print_docs()
 
 
@@ -547,11 +547,11 @@ class PHITrackEvaluation(CombindEvaluation):
         super(PHITrackEvaluation, self).__init__()
 
         # Basic Evaluation
-        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Strict (S)")
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Strict")
 
         # Fuzzy Evaluation
         PHITag.fuzzy_end_equality(2)
-        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Relaxed (R)")
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Relaxed")
 
 
         # Add HIPAA filter to evaluation arguments
@@ -560,12 +560,12 @@ class PHITrackEvaluation(CombindEvaluation):
         # Change equality back to strict
         PHITag.strict_equality()
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), 
-                      label="HIPAA (S)")
+                      label="HIPAA Strict")
 
         # Change equality to fuzzy end
         PHITag.fuzzy_end_equality(2)
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), 
-                      label="HIPAA (R)")
+                      label="HIPAA Relaxed")
         
                 
     @staticmethod

@@ -104,7 +104,8 @@
 
 
 
-from classes import StandoffAnnotation, Evaluate, CombindEvaluation, EvaluatePHI, EvaluateCardiacRisk
+from classes import StandoffAnnotation, Evaluate, CombindEvaluation, \
+    PHITrackEvaluation, EvaluateCardiacRisk
 import argparse
 import os
 from collections import defaultdict
@@ -321,7 +322,7 @@ if __name__ == "__main__":
 
     if args.filter:
         evaluate(args.from_dirs, args.to_dir,
-                 EvaluatePHI if args.sp == "phi" else EvaluateCardiacRisk,
+                 PHITrackEvaluation if args.sp == "phi" else EvaluateCardiacRisk,
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
@@ -329,5 +330,5 @@ if __name__ == "__main__":
                           for a in  args.filter.split(",")])
     else:
         evaluate(args.from_dirs, args.to_dir,
-                 EvaluatePHI if args.sp == "phi" else EvaluateCardiacRisk,
+                 PHITrackEvaluation if args.sp == "phi" else EvaluateCardiacRisk,
                  verbose=args.verbose)
