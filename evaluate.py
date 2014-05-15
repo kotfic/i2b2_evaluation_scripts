@@ -104,8 +104,8 @@
 
 
 
-from classes import StandoffAnnotation, Evaluate, CombindEvaluation, \
-    PHITrackEvaluation, EvaluateCardiacRisk
+from classes import StandoffAnnotation, Evaluate, CombinedEvaluation, \
+    PHITrackEvaluation, CardiacRiskTrackEvaluation
 import argparse
 import os
 from collections import defaultdict
@@ -217,7 +217,7 @@ def evaluate(system, gs, eval_class, **kwargs):
     handles formatting arguments for the eval_class. 
     """
     assert issubclass(eval_class, Evaluate) or \
-        issubclass(eval_class, CombindEvaluation), \
+        issubclass(eval_class, CombinedEvaluation), \
         "Must pass in EvaluatePHI or EvaluateCardiacRisk classes to evaluate()."
 
     gold_sa = {}
@@ -322,7 +322,7 @@ if __name__ == "__main__":
 
     if args.filter:
         evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else EvaluateCardiacRisk,
+                 PHITrackEvaluation if args.sp == "phi" else CardiacRiskTrackEvaluation,
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
@@ -330,5 +330,5 @@ if __name__ == "__main__":
                           for a in  args.filter.split(",")])
     else:
         evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else EvaluateCardiacRisk,
+                 PHITrackEvaluation if args.sp == "phi" else CardiacRiskTrackEvaluation,
                  verbose=args.verbose)

@@ -494,7 +494,7 @@ class EvaluateCardiacRisk(Evaluate):
 
 
 
-class CombindEvaluation(object):
+class CombinedEvaluation(object):
     """Base class for running multiple evaluations. This has a similar function
     signature to Evaluate and so can be used interchangably in the evaluate() 
     function.
@@ -503,7 +503,7 @@ class CombindEvaluation(object):
         self.evaluations = []
 
     def add_eval(self, e, label=""):
-        e.sys_id = label
+        e.sys_id = e.sys_id + " " + label if e.sys_id and e.sys_id != '' else label
         self.evaluations.append(e)
         
     def print_docs(self):
@@ -516,7 +516,16 @@ class CombindEvaluation(object):
 
 
 
-class PHITrackEvaluation(CombindEvaluation):
+class CardiacRiskTrackEvaluation(CombinedEvaluation):
+    
+    def __init__(self, annotator_cas, gold_cas, **kwargs):
+
+        super(CardiacRiskTrackEvaluation, self).__init__()
+        # Basic Evaluation
+        self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs), label="")
+
+
+class PHITrackEvaluation(CombinedEvaluation):
     
     # list of Tuples of regular expressions for matching (TAG, TYPE)
     # That are considered to be HIPAA protected for the PHI Track evaluation
