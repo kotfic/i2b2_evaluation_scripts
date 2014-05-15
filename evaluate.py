@@ -104,11 +104,12 @@
 
 
 
-from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
+from classes import StandoffAnnotation, Evaluate, CombindEvaluation, EvaluatePHI, EvaluateCardiacRisk
 import argparse
 import os
 from collections import defaultdict
 from tags import DocumentTag, MEDICAL_TAG_CLASSES
+import re
 
 
 # This function is 'exterimental' as in it works for my use cases
@@ -179,6 +180,9 @@ def get_predicate_function(arg):
     return matchp
 
 
+
+
+
 def get_document_dict_by_system_id(system_dirs):
     """Takes a list of directories and returns all of the StandoffAnnotation's
     as a system id, annotation id indexed dictionary. System id (or
@@ -211,10 +215,12 @@ def evaluate(system, gs, eval_class, **kwargs):
     directories. 'gs' will be a file or a directory.  This function mostly just
     handles formatting arguments for the eval_class. 
     """
-    assert eval_class == EvaluatePHI or eval_class == EvaluateCardiacRisk, \
-    "Must pass in EvaluatePHI or EvaluateCardiacRisk classes to evaluate()."
+    assert issubclass(eval_class, Evaluate) or \
+        issubclass(eval_class, CombindEvaluation), \
+        "Must pass in EvaluatePHI or EvaluateCardiacRisk classes to evaluate()."
 
     gold_sa = {}
+    evaluations = []
 
     # Strip verbose keyword if it exists
     # verbose is not a keyword to our eval classes
@@ -231,6 +237,7 @@ def evaluate(system, gs, eval_class, **kwargs):
         s = StandoffAnnotation(system[0])
         e = eval_class({s.id : s}, {gs.id : gs}, **kwargs)
         e.print_docs()
+        evaluations.append(e)
 
     # Handle the case where 'gs' is a directory and 'system' is a 
     # list of directories.  For individual evaluation (one system output
@@ -248,12 +255,13 @@ def evaluate(system, gs, eval_class, **kwargs):
         for s_id, system_sa in get_document_dict_by_system_id(system).items():
             e = eval_class(system_sa, gold_sa, **kwargs)
             e.print_report(verbose=verbose)
+            evaluations.append(e)
 
     else:
-        Exception("Must pass file.xml file.xml  or [directory/]+ directory/ \
-        on command line!")
+        Exception("Must pass file.xml file.xml  or [directory/]+ directory/" \
+                  "on command line!")
 
-    return True
+    return evaluations[0] if len(evaluations) == 1 else evaluations
 
 
 

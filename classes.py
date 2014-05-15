@@ -5,6 +5,7 @@ import numpy
 from collections import defaultdict, OrderedDict
 from tags import *
 import codecs
+import copy
 
 
 
@@ -309,9 +310,9 @@ class Evaluate(object):
         assert len(set([a.sys_id for a in annotator_cas.values()])) == 1, \
             "More than one annotator ID in this set of Annotations!"
         
+
         self.sys_id = annotator_cas.values()[0].sys_id
-        
-        
+                
         for doc_id in list(set(annotator_cas.keys()) & set(gold_cas.keys())):
             if filters != None:
             # Get all doc tags for each tag that passes all the 
@@ -489,3 +490,85 @@ class EvaluatePHI(Evaluate):
 class EvaluateCardiacRisk(Evaluate):
     def get_tagset(self, annotation):
         return annotation.get_doc_tags() 
+
+
+
+
+class CombindEvaluation(object):
+    """Base class for running multiple evaluations. This has a similar function
+    signature to Evaluate and so can be used interchangably in the evaluate() 
+    function.
+    """
+    def __init__(self):
+        self.evaluations = []
+
+    def add_eval(self, e, label=""):
+        e.sys_id = label
+        self.evaluations.append(e)
+        
+    def print_docs(self):
+        for e in self.evaluations:
+            e.print_docs()
+        
+    def print_report(self, verbose=False):
+        for e in self.evaluations:
+            e.print_report(verbose=verbose)
+
+
+
+class PHITrackEvaluation(CombindEvaluation):
+    
+    # list of Tuples of regular expressions for matching (TAG, TYPE)
+    # That are considered to be HIPAA protected for the PHI Track evaluation
+    HIPAA_regexes = [(re.compile("NAME"), re.compile("PATIENT")),
+                     (re.compile("LOCATION"), re.compile("CITY")),
+                     (re.compile("LOCATION"), re.compile("STREET")),
+                     (re.compile("LOCATION"), re.compile("ZIP")),
+                     (re.compile("LOCATION"), re.compile("ORGANIZATION")),
+                     (re.compile("DATE"), re.compile(".*")),
+                     (re.compile("CONTACT"), re.compile("PHONE")),
+                     (re.compile("CONTACT"), re.compile("FAX")),
+                     (re.compile("CONTACT"), re.compile("EMAIL")),
+                     (re.compile("ID"), re.compile("SSN")),
+                     (re.compile("ID"), re.compile("MEDICALRECORD")),
+                     (re.compile("ID"), re.compile("HEALTHPLAN")),
+                     (re.compile("ID"), re.compile("ACCOUNT")),
+                     (re.compile("ID"), re.compile("LICENSE")),
+                     (re.compile("ID"), re.compile("VEHICLE")),
+                     (re.compile("ID"), re.compile("DEVICE")),
+                     (re.compile("ID"), re.compile("BIOID")),
+                     (re.compile("ID"), re.compile("IDNUM ")),
+                     (re.compile("AGE"), re.compile(".*"))]
+
+
+
+    def __init__(self, annotator_cas, gold_cas, **kwargs):
+
+        super(PHITrackEvaluation, self).__init__()
+
+        # Basic Evaluation
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Strict (S)")
+
+        # Fuzzy Evaluation
+        PHITag.fuzzy_end_equality(2)
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Relaxed (R)")
+
+
+        # Add HIPAA filter to evaluation arguments
+        kwargs['filters'] = [PHITrackEvaluation.HIPAA_predicate_filter]
+
+        # Change equality back to strict
+        PHITag.strict_equality()
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), 
+                      label="HIPAA (S)")
+
+        # Change equality to fuzzy end
+        PHITag.fuzzy_end_equality(2)
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), 
+                      label="HIPAA (R)")
+        
+                
+    @staticmethod
+    def HIPAA_predicate_filter(tag):
+        return any([n_re.match(tag.name) and t_re.match(tag.TYPE) 
+                for n_re, t_re in PHITrackEvaluation.HIPAA_regexes])

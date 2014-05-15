@@ -5,7 +5,10 @@
 ##    It is based on a class hierarchy and most of the tag specific information
 ##    is contained in tag specific class attributes. This has the advantage of 
 ##    allowing us to validate tag information as it comes into,  and is saved
-##    out of objects instantiated from these classes.
+##    out of objects instantiated from these classes. Additionally classes are
+##    equality and set hashing is determined by functions in these classes 
+##    which may be dynamically changed at run time (see strict_equality() and
+##    fuzzy_end_equality() class methods for examples of what this looks like)
 ##
 ##    Class hierarchy reference
 ##
@@ -49,6 +52,7 @@ class Tag(object):
             self.id = element.attrib['id']
         except KeyError:
             self.id = ""
+        
 
     def _get_key(self):
         key = []
@@ -57,11 +61,29 @@ class Tag(object):
         return tuple(key)
 
 
+    def _key_equality(self, other):
+        return self._get_key() == other._get_key() and \
+            other._get_key() == self._get_key()
+
+    def _key_hash(self):
+        return hash(self._get_key())
+
     def __eq__(self, other):
-        return self._get_key() == other._get_key() and other._get_key() == self._get_key()
+        return self._key_equality(other)
 
     def __hash__(self):
-        return hash(self._get_key())
+        return self._key_hash()
+
+    @classmethod
+    def strict_equality(cls):
+        """  Allows tags to be switched back to default strict evaluation of
+        equality as defined by their class attribute 'key.' We use these
+        class methods like this because both __eq__ and __hash__ must be 
+        changed when we relax equality between tags.
+        """
+        cls.__eq__ = cls._key_equality
+        cls.__hash__ = cls._key_hash
+        
 
     def is_valid(self):
         for k, validp in self.attributes.items():
@@ -174,6 +196,50 @@ class AnnotatorTag(Tag):
                       "<%s ('%s')>, setting to ''" % (k, element.tag, 
                                                       element.attrib['id']) )
                 setattr(self, k, '')
+
+
+            
+
+    @classmethod
+    def fuzzy_end_equality(cls, distance):
+        """ Set the __eq__ and __hash__ functions of the cls argument
+        to be _fuzzy_end__eq__ and _fuzzy_end__hash__ as defined by this function.
+        Scope in the distance paramater which allows us to set different 
+        number of characters that we allow the end attribute to shift before we 
+        no longer consider two tags equal.
+        """
+        def _fuzzy_end__eq__(self, other):
+            self_dict = OrderedDict(zip(self.key, self._get_key()))
+            other_dict = OrderedDict(zip(other.key, other._get_key()))
+        
+            self_end = int(self_dict.pop("end"))
+            other_end = int(other_dict.pop("end"))
+        
+            if self_dict.values() == other_dict.values() and \
+               abs(self_end - other_end) <= distance:
+                return True
+        
+            return False
+        
+        def _fuzzy_end__hash__(self):
+            """ Here we effectively ignore the 'end' attribute when hashing.
+            Two tags with different endings will hash to the same value and then
+            be handled by _fuzzy_end__eq__ when it comes time to do comparisons.
+            """
+            self_dict = OrderedDict(zip(self.key, self._get_key()))
+
+            # if a == b then it MUST be the case that hash(a) == hash(b)
+            # but if a != b then the relationship between hash(a) and hash(b)
+            # does not need to be defined.
+            self_dict['end'] = True
+            return hash(tuple(self_dict.values()))
+                    
+
+        cls.__eq__ = _fuzzy_end__eq__
+        cls.__hash__ = _fuzzy_end__hash__
+
+
+
 
     def validate(self):
         for k,validp in self.attributes.items():
