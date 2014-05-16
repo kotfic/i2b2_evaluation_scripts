@@ -322,7 +322,8 @@ if __name__ == "__main__":
 
     if args.filter:
         evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else CardiacRiskTrackEvaluation,
+                 PHITrackEvaluation if args.sp == "phi" else \
+                 CardiacRiskTrackEvaluation,
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
@@ -330,5 +331,6 @@ if __name__ == "__main__":
                           for a in  args.filter.split(",")])
     else:
         evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else CardiacRiskTrackEvaluation,
+                 PHITrackEvaluation if args.sp == "phi" else \
+                 CardiacRiskTrackEvaluation,
                  verbose=args.verbose)

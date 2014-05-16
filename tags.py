@@ -125,7 +125,7 @@ class Tag(object):
 
 
     def toXML(self):
-        return etree.tostring(self.toElement())
+        return etree.tostring(self.toElement(), encoding='unicode')
 
 
     def toDict(self, attributes=None):

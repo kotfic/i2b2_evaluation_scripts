@@ -9,7 +9,7 @@ import copy
 
 
 
-class StandoffAnnotation():
+class StandoffAnnotation(object):
 
     id_parser = re.compile(r'^(\d+)-(\d+)(.*)\.xml')
     
@@ -41,8 +41,8 @@ class StandoffAnnotation():
 
             
         if file_name is not None:
-            with open(file_name) as handle:
-                self.parse_text_and_tags(handle.read())
+            with open(file_name, 'r') as handle:
+                self.parse_text_and_tags(handle.read().decode('utf8'))
                 self.file_name = file_name
                 
     @property
@@ -193,7 +193,7 @@ class StandoffAnnotation():
         if kwargs['pretty_print'] == "MAE":
             xml = self.toXML(**kwargs)
             
-            with open(path, "w") as h:
+            with open(path,"w") as h:
                 h.writelines([re.sub("^\s+<", "<", l + "\n") 
                               for l in xml.split("\n")])
 
@@ -204,7 +204,7 @@ class StandoffAnnotation():
         return True
     
     def __repr__(self):
-        return "<StandoffAnnotation (%s) %s: tags:%s phi:%s>" \
+        return u"<StandoffAnnotation (%s) %s: tags:%s phi:%s>" \
         % (self.sys_id, self.id, len(self.get_tags()), len(self.get_phi()))
 
     def get_filename(self):
@@ -261,7 +261,7 @@ class StandoffAnnotation():
         if text is not None:
             self.raw = text
         
-        soup = etree.fromstring(self.raw.encode("utf-8"))
+        soup = etree.fromstring(self.raw.encode("utf8"))
         self.root = soup.tag    
 
         try:
