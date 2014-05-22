@@ -7,7 +7,7 @@ If you would like to contribute to this script or suggest improvements, you
 can request to join the GitHub repository for this project here:
 https://github.com/kotfic/i2b2_evaluation_scripts/
 
-**Running the script**
+_Running the script_
 
 This script intended to be used via
 command line:
@@ -22,7 +22,7 @@ GOLD directory based on their file names.   See below for more information
 on the different output the cr/phi flag produces.
 
 
-**File name restrictions**
+_File name restrictions_
 
 File names MUST be of the form:
 XXX-YY.xml where XXX is the patient id,  and YY is the document id. The 
@@ -31,7 +31,7 @@ file name alone.  If your system outputs file names in a different format,
 you will need to either modify your system or this script.
 
 
-**Output for Risk Factor Track**
+_Output for Risk Factor Track_
 
 To compare your system output for the Risk Factor track, run the following 
 command for individual files:
@@ -62,7 +62,7 @@ getting right/wrong, you can use the more experimental flags.  Please see
 the evaluate.py script itself for more information on the flags.
 
 
-*Output for De-identification Track*
+_Output for De-identification Track_
 
 To compare your system output for the de-identification track, run the following 
 command on individual files:
@@ -114,7 +114,7 @@ A few notes to explain this output:
 
 
 
-*HIPAA-compliant PHI*
+_HIPAA-compliant PHI_
 
 - NAME/PATIENT
 - AGE
@@ -137,7 +137,7 @@ A few notes to explain this output:
 - ID/IDNUM 
 
 
-*Verbose flag*
+_Verbose flag_
 
 To get document-by-document information about the accuracy of your tags, you can use the
 "-v" or "--verbose" flag.  For example:
@@ -145,11 +145,9 @@ To get document-by-document information about the accuracy of your tags, you can
 $> python evaluate.py cr -v system/ gold/
 
 
-*Advanced useage*
+_Advanced useage_
 
-Advanced Usage:
-
-  Some additional functionality is made available for testing and error 
+Some additional functionality is made available for testing and error 
 analysis. This functionality is provided AS IS with the hopes that it will
 be useful. It should be considered 'experimental' at best, may be bug prone
 and will not be explicitly supported, though, bug reports and pull requests
