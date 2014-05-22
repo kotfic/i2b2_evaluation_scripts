@@ -7,7 +7,7 @@ If you would like to contribute to this script or suggest improvements, you
 can request to join the GitHub repository for this project here:
 https://github.com/kotfic/i2b2_evaluation_scripts/
 
-*Running the script*
+**Running the script**
 
 This script intended to be used via
 command line:
@@ -22,7 +22,7 @@ GOLD directory based on their file names.   See below for more information
 on the different output the cr/phi flag produces.
 
 
-*File name restrictions*
+**File name restrictions**
 
 File names MUST be of the form:
 XXX-YY.xml where XXX is the patient id,  and YY is the document id. The 
@@ -31,7 +31,7 @@ file name alone.  If your system outputs file names in a different format,
 you will need to either modify your system or this script.
 
 
-*Output for Risk Factor Track*
+**Output for Risk Factor Track**
 
 To compare your system output for the Risk Factor track, run the following 
 command for individual files:
@@ -45,11 +45,13 @@ $> python evaluate.py cr <system>/ <gold>/
 
 Running one of these versions will produce output that looks like this:
 
+```
  (# of files)            Measure        Macro (SD)     Micro               
 ---------------------------------------------------------------------------
 Total                    Precision      1.0 (0.0)      1.0                 
                          Recall         1.0 (0.0)      1.0                 
                          F1             1.0            1.0              
+```
 
 (Well, not exactly like this, unless your system is perfect.)
 
@@ -75,6 +77,7 @@ $> python evaluate.py phi<system>/ <gold>/
 
 Running one of these versions wil produce output that looks like this:
 
+```
 Strict (521)             Measure        Macro (SD)     Micro               
 ---------------------------------------------------------------------------
 Total                    Precision      0.6635 (0.11)  0.6537              
@@ -101,6 +104,7 @@ HIPAA Relaxed (521)      Measure        Macro (SD)     Micro
 Total                    Precision      1.0 (0.0)      1.0                 
                          Recall         1.0 (0.0)      1.0                 
                          F1             1.0            1.0                 
+```
 
 A few notes to explain this output:
 -  The "(521)" represents the number of files the scrip was run on
