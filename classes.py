@@ -208,6 +208,10 @@ class StandoffAnnotation(object):
     def id(self):
         return self.patient_id + "-" + self.record_id
 
+    @id.setter
+    def id(self, value):
+        self.patient_id, self.record_id = value.split("-")
+
     @property
     def token_sequence(self):
         if self._tokens == None:
