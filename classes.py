@@ -265,27 +265,28 @@ class StandoffAnnotation(object):
             if hasattr(tag, "start") and hasattr(tag, "end"):
                 positions.append((tag.get_start(), tag.get_end(), tag))
         
-        positions.sort(key=lambda x: x[0])
+        if len(positions):
+            positions.sort(key=lambda x: x[0])
 
-        last_start = positions[0][0]
-        last_end = positions[0][1]
-        concat = []
-        for start,end,t in positions[1:]:
-            if start <= last_end:
-                if end >= last_end:
+            last_start = positions[0][0]
+            last_end = positions[0][1]
+            concat = []
+            for start,end,t in positions[1:]:
+                if start <= last_end:
+                    if end >= last_end:
+                        last_end = end
+                else:
+                    concat.append((last_start,last_end, t))
+                    last_start = start
                     last_end = end
-            else:
-                concat.append((last_start,last_end, t))
-                last_start = start
-                last_end = end
 
-        concat.append((last_start,last_end, t))
+            concat.append((last_start,last_end, t))
 
-        # return the text
-        for start,end,tag in sorted(concat, key=lambda x: x[0], reverse=True):
-            open_str, close_str  = self.get_annotation_tag_color(tag.name)
-            text = text[:start] + open_str + \
-                   text[start:end] + close_str + text[end:]
+            # return the text
+            for start,end,tag in sorted(concat, key=lambda x: x[0], reverse=True):
+                open_str, close_str  = self.get_annotation_tag_color(tag.name)
+                text = text[:start] + open_str + \
+                       text[start:end] + close_str + text[end:]
 
         return text
 
