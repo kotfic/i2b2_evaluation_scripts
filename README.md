@@ -3,15 +3,19 @@
 This script is distributed as apart of the i2b2 2014 Cardiac Risk and 
 Personal Health-care Information (PHI) tasks. 
 
-If you would like to contribute to this script or suggest improvements, you 
-can request to join the GitHub repository for this project here:
-https://github.com/kotfic/i2b2_evaluation_scripts/
+If you would like to contribute to this project, pull requests are welcome.
+Please see: https://help.github.com/articles/fork-a-repo for instructions
+on how to make a fork of this repository, and
+https://help.github.com/articles/using-pull-requests for instructions on
+making a pull request. Suggestions for improvements, bugs or feature requests
+may be directed to the i2b2 evaluation scripts' issues page located at:
+https://github.com/kotfic/i2b2_evaluation_scripts/issues
 
 _Running the script_
 
 This script intended to be used via
 command line:
-$> python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
+$&gt; python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
 
 Where 'cr' produces Precision, Recall and F1 (P/R/F1) measure for the 
 cardiac risk task and 'phi' produces P/R/F1 for the PHI task. SYSTEM and GOLD 
@@ -36,12 +40,12 @@ _Output for Risk Factor Track_
 To compare your system output for the Risk Factor track, run the following 
 command for individual files:
 
-$> python evaluate.py cr <system.xml> <gold.xml>
-(replace the file names in <>s with the names of your actual files)
+$&gt; python evaluate.py cr &lt;system.xm&gt; &lt;gold.xml&gt;
+(replace the file names in &lt;&gt;s with the names of your actual files)
 
 or, to run the script on directories of files:
-$> python evaluate.py cr <system>/ <gold>/
-(again, replace the folder names in <>s with the names of your actual folders)
+$&gt; python evaluate.py cr &lt;system&gt;/ &lt;gold&gt;/
+(again, replace the folder names in &lt;&gt;s with the names of your actual folders)
 
 Running one of these versions will produce output that looks like this:
 
@@ -67,12 +71,12 @@ _Output for De-identification Track_
 To compare your system output for the de-identification track, run the following 
 command on individual files:
 
-$> python evaluate.py phi <system.xml> <gold.xml>
-(replace the file names in <>s with the names of your actual files)
+$&gt; python evaluate.py phi &lt;system.xml&gt; &lt;gold.xml&gt;
+(replace the file names in &lt;&gt;s with the names of your actual files)
 
 or, to run the script on directories of files:
-$> python evaluate.py phi<system>/ <gold>/
-(again, replace the folder names in <>s with the names of your actual folders)
+$&gt; python evaluate.py phi&lt;system&gt;/ &lt;gold&gt;/
+(again, replace the folder names in &lt;&gt;s with the names of your actual folders)
 
 
 Running one of these versions wil produce output that looks like this:
@@ -142,7 +146,7 @@ _Verbose flag_
 To get document-by-document information about the accuracy of your tags, you can use the
 "-v" or "--verbose" flag.  For example:
 
-$> python evaluate.py cr -v system/ gold/
+$&gt; python evaluate.py cr -v system/ gold/
 
 
 _Advanced useage_
@@ -168,36 +172,36 @@ Advanced Flags:
 
 Advanced Examples:
 
-$> python evaluate.py cr --filter MEDICATION system/ gold/ 
+$&gt; python evaluate.py cr --filter MEDICATION system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only MEDICATION tags
 
-$> python evaluate.py cr --filter CAD,OBESE system/ gold/ 
+$&gt; python evaluate.py cr --filter CAD,OBESE system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only CAD or OBESE tags. Comma separated lists to the --filter flag are con-
 joined via OR.
 
-$> python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
+$&gt; python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only CAD *OR* tags with a time attribute of before DCT. This is probably 
 not what you want when filtering, see the next example
 
-$> python evaluate.py cr --conjunctive \
+$&gt; python evaluate.py cr --conjunctive \
                          --filter "CAD,before DCT" system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 CAD tags *AND* tags with a time attribute of before DCT.
 
-$> python evaluate.py cr --invert \
+$&gt; python evaluate.py cr --invert \
                          --filter MEDICATION system/ gold/
 
  Evaluate system output in system/ folder against gold/ folder considering
 any tag which is NOT a MEDICATION tag.
 
-$> python evaluate.py cr --invert \
+$&gt; python evaluate.py cr --invert \
                          --conjunctive \
                          --filter "CAD,before DCT" system/ gold/ 
 
