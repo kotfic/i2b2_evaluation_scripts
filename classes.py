@@ -8,11 +8,211 @@ import codecs
 import copy
 
 
+class Token(object):
+    """ Class designed to encapsulate the idea of a token.  This includes
+    the token itself,  plus pre and post whitespace,  as well as the start and
+    end positions of the token with-in the document that the token was parsed
+    out of.  It also includes an 'index' attribute that can be set by external
+    functions and classes (see TokenSequence).
+    """
+    def __init__(self, token, pre_ws, post_ws, index, start, end):
+        self.token = token
+        self.start = int(start)
+        self.end = int(end)
+        self.index = int(index)
+
+        # pre whitespace
+        self.pre_ws = pre_ws
+        # post whitespace
+        self.post_ws = post_ws
+
+
+    def __repr__(self):
+        return "<{}: {}, {}, {}, i:{}, s:{}, e:{}>".format(self.__class__.__name__, 
+                                                           self.pre_ws.__repr__(), 
+                                                           self.token.__repr__(), 
+                                                           self.post_ws.__repr__(), 
+                                                           self.index,
+                                                           self.start, self.end)
+
+    def __str__(self):
+        return self.token + self.post_ws
+        
+    def __len__(self):
+        return len(str(self))
+
+    def _get_key(self):
+        return (self.start, self.end)
+
+    def __hash__(self):
+        return hash(self._get_key())
+
+    def __eq__(self, other):
+        """ Test the equality of two tokens. Based on start and end values. 
+        """
+        if other._get_key() == self._get_key() and other._get_key() == self._get_key():
+            return True
+
+        return False
+
+
+
+
+class TokenSequence(object):
+    """ Encapsulates the functionality of a sequence of tokens.  it is designed
+    to parse using the tokenizer() classmethod,  but can use any other subclassed
+    method as long as it returns a list of Token() objects.
+    """
+    tokenizer_re = re.compile(r'([a-zA-Z0-9]+)')
+
+    token_cls = Token
+    
+    @classmethod
+    def tokenizer(cls, text, start=0):
+
+        # This could be a one-liner,  but we'll split it up 
+        # so its a litle clearer.
+
+        # This generates a list of strings in the form 
+        # [WHTEPSACE, TOKEN, WHITESPACE, TOKEN ...]
+        split_tokens = re.split(cls.tokenizer_re, text)
+        
+        # This generates trigrams from the list in the form
+        # [(WHITESPACE, TOKEN, WHITESPACE),
+        #  (TOKEN, WHITESPACE, TOKEN),
+        #  (WHITESPACE, TOKEN, WHITESPACE)
+        #  .... ]
+        token_trigrams =  zip(*[split_tokens[i:] for i in range(3)])
+
+        # This keeps only odd tuples from token trigrams,  ie:
+        # [(WHITESPACE, TOKEN, WHITESPACE),
+        #  (WHITESPACE, TOKEN, WHITESPACE),
+        #  (WHITESPACE, TOKEN, WHITESPACE)
+        #  .... ]
+        token_tuples = [t for i,t in enumerate(token_trigrams) if not bool(i & 1)]
+
+        tokens = []
+        index = 0
+
+        # Add a dummy token that accounts for the leading whitespace
+        # But only if we're starting at the begining of a document
+        # If we're dealing with a tag or some other mid-document location
+        # skip this part
+        if start == 0:
+            tokens.append(cls.token_cls("", "", split_tokens[0], index, 0, 0))
+            index += 1
+
+        # Calculate start and end positions of the non-whitespace/punctuation
+        # and append the token with its index into the list of tokens.
+        for pre, token, post in token_tuples:
+            token_start = start + len(pre)
+            token_end = token_start + len(token)
+            start = token_end
+            tokens.append(cls.token_cls(token, pre, post, index, token_start, token_end))
+            index += 1
+        
+
+
+        return tokens
+
+
+    def __init__(self, text, tokenizer=None, start=0):
+
+
+        tokenizer = self.tokenizer if tokenizer is None else tokenizer
+
+        if hasattr(text, "__iter__"):            
+            self.text = ''.join(str(t) for t in text)
+            self.tokens = text
+            
+        else:
+            self.text = text
+            self.tokens = tokenizer(self.text, start=start)
+    
+        # If start is 0 we assume we're parsing a whole document 
+        # and not a sub-string of tokens.
+        if start == 0:
+            assert len(self.text) == sum(len(t) for t in self.tokens), \
+                "Tokenizer MUST return a list of strings with character " \
+                "length equal to text length"
+
+    @staticmethod
+    def tokens_to_string(tokens):
+        return ''.join([str(t) for t in tokens])
+
+    def __str__(self):
+        return self.tokens_to_string(self.tokens).encode('string_escape')
+
+
+    def __repr__(self):
+        return "<{} '{}', s:{}, e:{}>".format(self.__class__.__name__,
+                                            str(self) if len(str(self)) < 40 else str(self)[:37] + "...",
+                                            self[0].start,
+                                            self[-1].end)
+
+
+    def __len__(self):
+        return len(self.tokens)
+
+
+    def __getitem__(self, index):
+        return self.tokens[index]
+
+
+    def __iter__(self):
+        return self.tokens.__iter__()
+    
+    def next(self):
+        return self.tokens.next()
+
+
+    def subseq(self, other):
+        """Test if we are a subsequence of other"""
+        return all([t in other.tokens for t in self.tokens])
+
+
+class PHIToken(Token):
+    def __init__(self, token, pre_ws, post_ws, index, start, end):
+        super(PHIToken, self).__init__(token, pre_ws, post_ws, index, start, end)
+        self.name = ""
+        self.TYPE = ""
+
+    def __repr__(self):
+        return "<{}: {}, {}, {}, {}, {}, i:{}, s:{}, e:{}>".format(self.__class__.__name__,
+                                                                   self.name,
+                                                                   self.TYPE,
+                                                                   self.pre_ws.__repr__(), 
+                                                                   self.token.__repr__(), 
+                                                                   self.post_ws.__repr__(), 
+                                                                   self.index,
+                                                                   self.start, self.end)
+
+    def _get_key(self):
+        return (self.name, self.TYPE, self.start, self.end)
+
+
+class PHITokenSequence(TokenSequence):
+
+    token_cls = PHIToken
+
+    def __init__(self, text, phi_tag, tokenizer=None, start=0):
+        super(PHITokenSequence, self).__init__(text, tokenizer=tokenizer, start=start)
+
+        for t in self.tokens:
+            t.name = phi_tag.name
+            t.TYPE = phi_tag.TYPE
+
+
+
 
 class StandoffAnnotation(object):
-
+    """ This class models a standoff annotation,  including parsing out file ID 
+    information,  processing text and tags into objectsand coverting these
+    objects back into XML elements,  dicts, files, token sequences etc.
+    """
     id_parser = re.compile(r'^(\d+)-(\d+)(.*)\.xml')
-    
+    token_sequence_class = TokenSequence
+
     def __init__(self, file_name=None, root="root"):
         self.patient_id = ''
         self.record_id = ''
@@ -24,7 +224,6 @@ class StandoffAnnotation(object):
         self.doc_tags = []
         self.tags = []
         self.phi = []
-        self.post_normalized_sentences =  []
         self._tokens = None
 
         if file_name:
@@ -48,6 +247,32 @@ class StandoffAnnotation(object):
     @property
     def id(self):
         return self.patient_id + "-" + self.record_id
+
+    @id.setter
+    def id(self, value):
+        self.patient_id, self.record_id = value.split("-")
+
+    @property
+    def token_sequence(self):
+        if self._tokens == None:
+            self._tokens = self.token_sequence_class(self.text, self.token_sequence_class.tokenizer)
+
+        return self._tokens
+
+    
+    def tag_to_token_sequence(self, tag):
+        try:
+            seq = self.token_sequence_class(tag.text, start=int(tag.start))
+            for token in seq:
+                try:
+                    token.index = self.token_sequence.tokens.index(token)
+                except ValueError:
+                    token.index = None
+            return seq
+        except:
+            return []
+
+
 
     def __hash__(self):
         return hash(self.id)
@@ -84,27 +309,28 @@ class StandoffAnnotation(object):
             if hasattr(tag, "start") and hasattr(tag, "end"):
                 positions.append((tag.get_start(), tag.get_end(), tag))
         
-        positions.sort(key=lambda x: x[0])
+        if len(positions):
+            positions.sort(key=lambda x: x[0])
 
-        last_start = positions[0][0]
-        last_end = positions[0][1]
-        concat = []
-        for start,end,t in positions[1:]:
-            if start <= last_end:
-                if end >= last_end:
+            last_start = positions[0][0]
+            last_end = positions[0][1]
+            concat = []
+            for start,end,t in positions[1:]:
+                if start <= last_end:
+                    if end >= last_end:
+                        last_end = end
+                else:
+                    concat.append((last_start,last_end, t))
+                    last_start = start
                     last_end = end
-            else:
-                concat.append((last_start,last_end, t))
-                last_start = start
-                last_end = end
 
-        concat.append((last_start,last_end, t))
+            concat.append((last_start,last_end, t))
 
-        # return the text
-        for start,end,tag in sorted(concat, key=lambda x: x[0], reverse=True):
-            open_str, close_str  = self.get_annotation_tag_color(tag.name)
-            text = text[:start] + open_str + \
-                   text[start:end] + close_str + text[end:]
+            # return the text
+            for start,end,tag in sorted(concat, key=lambda x: x[0], reverse=True):
+                open_str, close_str  = self.get_annotation_tag_color(tag.name)
+                text = text[:start] + open_str + \
+                       text[start:end] + close_str + text[end:]
 
         return text
 
@@ -487,6 +713,15 @@ class EvaluatePHI(Evaluate):
 
 
 
+class EvaluateTokenizedPHI(Evaluate):
+    def get_tagset(self, annotation):
+        return [token for tag in annotation.get_phi() 
+                for token in PHITokenSequence(
+                        annotation.text[int(tag.start):int(tag.end)],
+                        tag,
+                        start=int(tag.start))]
+
+
 class EvaluateCardiacRisk(Evaluate):
     def get_tagset(self, annotation):
         return annotation.get_doc_tags() 
@@ -555,16 +790,24 @@ class PHITrackEvaluation(CombinedEvaluation):
 
         super(PHITrackEvaluation, self).__init__()
 
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs), label="Token")
+
         # Basic Evaluation
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Strict")
-
+ 
         # Fuzzy Evaluation
         PHITag.fuzzy_end_equality(2)
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Relaxed")
-
-
+ 
+ 
         # Add HIPAA filter to evaluation arguments
         kwargs['filters'] = [PHITrackEvaluation.HIPAA_predicate_filter]
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs), 
+                      label="HIPPA Token")
+
 
         # Change equality back to strict
         PHITag.strict_equality()
