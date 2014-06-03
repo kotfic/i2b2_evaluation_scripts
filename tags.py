@@ -1,38 +1,38 @@
-################################################################################
-##  
-##      This file manages all tag related classes and encapsulates much of the 
-##    functionality that the rest of this evaluation script works off of. 
-##    It is based on a class hierarchy and most of the tag specific information
-##    is contained in tag specific class attributes. This has the advantage of 
-##    allowing us to validate tag information as it comes into,  and is saved
-##    out of objects instantiated from these classes. Additionally classes are
-##    equality and set hashing is determined by functions in these classes 
-##    which may be dynamically changed at run time (see strict_equality() and
-##    fuzzy_end_equality() class methods for examples of what this looks like)
-##
-##    Class hierarchy reference
-##
-##    [+]Tag
-##       [+]DocumentTag
-##       [+]AnnotatorTag
-##          [+]PHITag
-##             [+]NameTag       
-##             [+]ProfessionTag 
-##             [+]LocationTag   
-##             [+]AgeTag        
-##             [+]DateTag       
-##             [+]ContactTag    
-##             [+]IDTag         
-##             [+]OtherTag      
-##          [+]DiseaseTag
-##             [+]DiabetesTag
-##             [+]CADTag
-##             [+]HypertensionTag
-##             [+]HyperlipidemiaTag
-##             [+]ObeseTag
-##             [+]MedicationTag
-##          [+]FamilyHistTag
-##          [+]SmokerTag
+###############################################################################
+#
+#      This file manages all tag related classes and encapsulates much of the
+#    functionality that the rest of this evaluation script works off of.
+#    It is based on a class hierarchy and most of the tag specific information
+#    is contained in tag specific class attributes. This has the advantage of
+#    allowing us to validate tag information as it comes into,  and is saved
+#    out of objects instantiated from these classes. Additionally classes are
+#    equality and set hashing is determined by functions in these classes
+#    which may be dynamically changed at run time (see strict_equality() and
+#    fuzzy_end_equality() class methods for examples of what this looks like)
+#
+#    Class hierarchy reference
+#
+#    [+]Tag
+#       [+]DocumentTag
+#       [+]AnnotatorTag
+#          [+]PHITag
+#             [+]NameTag
+#             [+]ProfessionTag
+#             [+]LocationTag
+#             [+]AgeTag
+#             [+]DateTag
+#             [+]ContactTag
+#             [+]IDTag
+#             [+]OtherTag
+#          [+]DiseaseTag
+#             [+]DiabetesTag
+#             [+]CADTag
+#             [+]HypertensionTag
+#             [+]HyperlipidemiaTag
+#             [+]ObeseTag
+#             [+]MedicationTag
+#          [+]FamilyHistTag
+#          [+]SmokerTag
 
 from lxml import etree
 from collections import OrderedDict
@@ -52,14 +52,12 @@ class Tag(object):
             self.id = element.attrib['id']
         except KeyError:
             self.id = ""
-        
 
     def _get_key(self):
         key = []
         for k in self.key:
             key.append(getattr(self, k))
         return tuple(key)
-
 
     def _key_equality(self, other):
         return self._get_key() == other._get_key() and \
@@ -78,18 +76,17 @@ class Tag(object):
     def strict_equality(cls):
         """  Allows tags to be switched back to default strict evaluation of
         equality as defined by their class attribute 'key.' We use these
-        class methods like this because both __eq__ and __hash__ must be 
+        class methods like this because both __eq__ and __hash__ must be
         changed when we relax equality between tags.
         """
         cls.__eq__ = cls._key_equality
         cls.__hash__ = cls._key_hash
-        
 
     def is_valid(self):
         for k, validp in self.attributes.items():
             try:
                 # If the validating function fails throw false
-                if not validp(getattr(self,k)):
+                if not validp(getattr(self, k)):
                     return False
             except AttributeError:
                 # Attribute is not set,  if it is in the key then
@@ -103,34 +100,32 @@ class Tag(object):
         element = etree.Element(self.name)
         for k, validp in self.attributes.items():
             try:
-                if validp(getattr(self,k)):
+                if validp(getattr(self, k)):
                     element.attrib[k] = getattr(self, k)
                 else:
                     element.attrib[k] = getattr(self, k)
-                    print("WARNING: Expected attribute '%s' for tag %s was " \
-                          "not valid ('%s')" % (k, "<%s (%s)>" % (self.name, 
-                                                                  self.id), 
+                    print("WARNING: Expected attribute '%s' for tag %s was "
+                          "not valid ('%s')" % (k, "<%s (%s)>" % (self.name,
+                                                                  self.id),
                                                 getattr(self, k)))
             except AttributeError:
                 if k in self.key:
                     element.attrib[k] = ''
-                    print("WARNING: Expected attribute '%s' for tag %s" % 
+                    print("WARNING: Expected attribute '%s' for tag %s" %
                           (k, "<%s, %s>" % (self.name, self.id)))
 
         return element
 
     def __repr__(self):
-        return "<{0}: {1}>".format(self.__class__.__name__, 
+        return "<{0}: {1}>".format(self.__class__.__name__,
                                    ", ".join(self._get_key()))
-
 
     def toXML(self):
         return etree.tostring(self.toElement(), encoding='unicode')
 
-
     def toDict(self, attributes=None):
         d = {}
-        if attributes == None:
+        if attributes is None:
             attributes = ["name"] + [k for k, v in self.attributes.items()]
 
         for a in attributes:
@@ -144,7 +139,8 @@ class Tag(object):
 
 def isint(x):
     try:
-        int(x); return True
+        int(x)
+        return True
     except ValueError:
         return False
 
@@ -162,69 +158,66 @@ class AnnotatorTag(Tag):
     attributes["end"] = isint
     attributes["text"] = lambda v: True
 
-
     key = ["name"]
-
 
     def __repr__(self):
         try:
-            return "<{0}: {1} s:{2} e:{3}>".format(self.__class__.__name__, 
-                                                   ", ".join(self._get_key()), 
-                                                   self.start, self.end )
+            return "<{0}: {1} s:{2} e:{3}>".format(self.__class__.__name__,
+                                                   ", ".join(self._get_key()),
+                                                   self.start, self.end)
         except AttributeError:
             return super(Tag, self).__repr__()
-
 
     def __init__(self, element):
         super(AnnotatorTag, self).__init__(element)
         self.id = None
 
-
-        for k,validp in self.attributes.items():
+        for k, validp in self.attributes.items():
             if k in element.attrib.keys():
                 if validp(element.attrib[k]):
                     setattr(self, k, element.attrib[k])
                 else:
-                    
-                    print("WARNING: Expected attribute '%s' for xml element " \
-                          "<%s (%s)>  was not valid ('%s')" % (k, element.tag, 
-                                                         element.attrib['id'], 
-                                                         element.attrib[k]) )
+                    fstr = "WARNING: Expected attribute '{}' for xml element "
+                    fstr += "<{} ({})>  was not valid ('{}')"
+                    print(fstr.format(k, element.tag,
+                                      element.attrib['id'],
+                                      element.attrib[k]))
                     setattr(self, k, element.attrib[k])
+
             elif k in self.key:
-                print("WARNING: Expected attribute '%s' for xml element " \
-                      "<%s ('%s')>, setting to ''" % (k, element.tag, 
-                                                      element.attrib['id']) )
+                fstr = "WARNING: Expected attribute '%s' for xml element "
+                fstr += "<%s ('%s')>, setting to ''"
+                print(fstr.format(k, element.tag, element.attrib['id']))
+
                 setattr(self, k, '')
-
-
-            
 
     @classmethod
     def fuzzy_end_equality(cls, distance):
         """ Set the __eq__ and __hash__ functions of the cls argument
-        to be _fuzzy_end__eq__ and _fuzzy_end__hash__ as defined by this function.
-        Scope in the distance paramater which allows us to set different 
-        number of characters that we allow the end attribute to shift before we 
-        no longer consider two tags equal.
+        to be _fuzzy_end__eq__ and _fuzzy_end__hash__ as defined by this
+        function. Scope in the distance paramater which allows us to set
+        different number of characters that we allow the end attribute to
+        shift before we no longer consider two tags equal.
         """
+
         def _fuzzy_end__eq__(self, other):
             self_dict = OrderedDict(zip(self.key, self._get_key()))
             other_dict = OrderedDict(zip(other.key, other._get_key()))
-        
+
             self_end = int(self_dict.pop("end"))
             other_end = int(other_dict.pop("end"))
-        
+
             if self_dict.values() == other_dict.values() and \
                abs(self_end - other_end) <= distance:
                 return True
-        
+
             return False
-        
+
         def _fuzzy_end__hash__(self):
             """ Here we effectively ignore the 'end' attribute when hashing.
-            Two tags with different endings will hash to the same value and then
-            be handled by _fuzzy_end__eq__ when it comes time to do comparisons.
+            Two tags with different endings will hash to the same value and
+            then be handled by _fuzzy_end__eq__ when it comes time to do
+            comparisons.
             """
             self_dict = OrderedDict(zip(self.key, self._get_key()))
 
@@ -233,16 +226,12 @@ class AnnotatorTag(Tag):
             # does not need to be defined.
             self_dict['end'] = True
             return hash(tuple(self_dict.values()))
-                    
 
         cls.__eq__ = _fuzzy_end__eq__
         cls.__hash__ = _fuzzy_end__hash__
 
-
-
-
     def validate(self):
-        for k,validp in self.attributes.items():
+        for k, validp in self.attributes.items():
             try:
                 if validp(getattr(self, k)):
                     continue
@@ -253,15 +242,12 @@ class AnnotatorTag(Tag):
                     return False
 
         return True
-        
-
 
     def get_document_annotation(self):
         element = etree.Element(self.name)
-        for k,v in zip(self.key, self._get_key()):
+        for k, v in zip(self.key, self._get_key()):
             element.attrib[k] = v
         return DocumentTag(element)
-
 
     def get_start(self):
         try:
@@ -277,28 +263,26 @@ class AnnotatorTag(Tag):
 
 
 class PHITag(AnnotatorTag):
-    valid_TYPE = ["PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM", 
-                  "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY", 
-                  "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE", 
-                  "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN", 
-                  "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE", 
+    valid_TYPE = ["PATIENT", "DOCTOR", "USERNAME", "PROFESSION", "ROOM",
+                  "DEPARTMENT", "HOSPITAL", "ORGANIZATION", "STREET", "CITY",
+                  "STATE", "COUNTRY", "ZIP", "OTHER", "LOCATION-OTHER", "AGE",
+                  "DATE", "PHONE", "FAX", "EMAIL", "URL", "IPADDR", "SSN",
+                  "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE",
                   "VEHICLE", "DEVICE", "BIOID", "IDNUM"]
     attributes = OrderedDict(AnnotatorTag.attributes.items())
     attributes['TYPE'] = lambda v: v in PHITag.valid_TYPE
 
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
 
-
     def exact_equals(self, other):
         pass
-    
+
     def overlap_equals(self, other):
         pass
 
 
-
 class NameTag(PHITag):
-    valid_TYPE = [ 'PATIENT','DOCTOR','USERNAME' ]
+    valid_TYPE = ['PATIENT', 'DOCTOR', 'USERNAME']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in NameTag.valid_TYPE
 
@@ -308,52 +292,55 @@ class ProfessionTag(PHITag):
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in ProfessionTag.valid_TYPE
 
+
 class LocationTag(PHITag):
-    valid_TYPE = ['ROOM','DEPARTMENT','HOSPITAL','ORGANIZATION','STREET',
-                  'CITY','STATE','COUNTRY','ZIP','LOCATION-OTHER']
+    valid_TYPE = ['ROOM', 'DEPARTMENT', 'HOSPITAL', 'ORGANIZATION', 'STREET',
+                  'CITY', 'STATE', 'COUNTRY', 'ZIP', 'LOCATION-OTHER']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in LocationTag.valid_TYPE
+
 
 class AgeTag(PHITag):
     valid_TYPE = ['AGE']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in AgeTag.valid_TYPE
 
+
 class DateTag(PHITag):
     valid_TYPE = ['DATE']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in DateTag.valid_TYPE
 
+
 class ContactTag(PHITag):
-    valid_TYPE = ['PHONE','FAX','EMAIL','URL','IPADDR']
+    valid_TYPE = ['PHONE', 'FAX', 'EMAIL', 'URL', 'IPADDR']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in ContactTag.valid_TYPE
 
+
 class IDTag(PHITag):
-    valid_TYPE = ['SSN','MEDICALRECORD','HEALTHPLAN','ACCOUNT',
-                  'LICENSE','VEHICLE','DEVICE','BIOID','IDNUM']
+    valid_TYPE = ['SSN', 'MEDICALRECORD', 'HEALTHPLAN', 'ACCOUNT',
+                  'LICENSE', 'VEHICLE', 'DEVICE', 'BIOID', 'IDNUM']
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in IDTag.valid_TYPE
 
+
 class OtherTag(PHITag):
-    valid_TYPE =  'OTHER'
+    valid_TYPE = 'OTHER'
     attributes = OrderedDict(PHITag.attributes.items())
     attributes['TYPE'] = lambda v: v in OtherTag.valid_TYPE
-        
 
 
 PHITag.tag_types = {
-    "PHI" : PHITag,
-    "NAME" : NameTag,
-    "PROFESSION" : ProfessionTag,
-    "LOCATION" : LocationTag,
-    "AGE" : AgeTag,
-    "DATE" : DateTag,
-    "CONTACT" : ContactTag,
-    "ID" : IDTag,
-    "OTHER" : OtherTag }
-
-
+    "PHI": PHITag,
+    "NAME": NameTag,
+    "PROFESSION": ProfessionTag,
+    "LOCATION": LocationTag,
+    "AGE": AgeTag,
+    "DATE": DateTag,
+    "CONTACT": ContactTag,
+    "ID": IDTag,
+    "OTHER": OtherTag}
 
 
 class FamilyHistTag(AnnotatorTag):
@@ -365,12 +352,12 @@ class FamilyHistTag(AnnotatorTag):
     key = AnnotatorTag.key + ["indicator"]
 
     def __init__(self, element):
-        # FAMILY_HIST tags do not (by design) have an indicator tag before 
-        # cleaning.  However we require an indicator to be a valid tag after 
-        # cleaning,  this causes some unfortunate hacking here to ensure that 
+        # FAMILY_HIST tags do not (by design) have an indicator tag before
+        # cleaning.  However we require an indicator to be a valid tag after
+        # cleaning,  this causes some unfortunate hacking here to ensure that
         # an indicator tag is present before any validation happens.
         try:
-            if int(element.attrib['start'] ) != -1 and \
+            if int(element.attrib['start']) != -1 and \
                int(element.attrib['end']) != -1:
                 element.attrib['indicator'] = "present"
             else:
@@ -382,7 +369,7 @@ class FamilyHistTag(AnnotatorTag):
 
 
 class SmokerTag(AnnotatorTag):
-    valid_status = ["current", "past", "ever", "never", "unknown" ]
+    valid_status = ["current", "past", "ever", "never", "unknown"]
 
     attributes = OrderedDict(AnnotatorTag.attributes.items())
     attributes["status"] = lambda v: v in SmokerTag.valid_status
@@ -390,9 +377,8 @@ class SmokerTag(AnnotatorTag):
     key = AnnotatorTag.key + ["status"]
 
 
-
 class DiseaseTag(AnnotatorTag):
-    valid_time = [ "before DCT", "during DCT", "after DCT", "continuing" ]
+    valid_time = ["before DCT", "during DCT", "after DCT", "continuing"]
 
     attributes = OrderedDict(AnnotatorTag.attributes.items())
     attributes["time"] = lambda v: v in DiseaseTag.valid_time
@@ -400,9 +386,8 @@ class DiseaseTag(AnnotatorTag):
     key = AnnotatorTag.key + ["time"]
 
 
-
 class DiabetesTag(DiseaseTag):
-    valid_indicator = [ "mention", "A1C", "glucose" ]
+    valid_indicator = ["mention", "A1C", "glucose"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["indicator"] = lambda v: v in DiabetesTag.valid_indicator
@@ -410,9 +395,8 @@ class DiabetesTag(DiseaseTag):
     key = DiseaseTag.key + ["indicator"]
 
 
-
 class CADTag(DiseaseTag):
-    valid_indicator = [ "mention", "event", "test", "symptom" ]
+    valid_indicator = ["mention", "event", "test", "symptom"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["indicator"] = lambda v: v in CADTag.valid_indicator
@@ -420,10 +404,8 @@ class CADTag(DiseaseTag):
     key = DiseaseTag.key + ["indicator"]
 
 
-
-
 class HypertensionTag(DiseaseTag):
-    valid_indicator = [ "mention", "high bp"]
+    valid_indicator = ["mention", "high bp"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["indicator"] = lambda v: v in HypertensionTag.valid_indicator
@@ -431,16 +413,13 @@ class HypertensionTag(DiseaseTag):
     key = DiseaseTag.key + ["indicator"]
 
 
-
 class HyperlipidemiaTag(DiseaseTag):
-    valid_indicator = [ "mention",  "high chol.",  "high LDL" ]
+    valid_indicator = ["mention",  "high chol.",  "high LDL"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["indicator"] = lambda v: v in HyperlipidemiaTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
-
-
 
 
 class ObeseTag(DiseaseTag):
@@ -452,18 +431,17 @@ class ObeseTag(DiseaseTag):
     key = DiseaseTag.key + ["indicator"]
 
 
-
 class MedicationTag(DiseaseTag):
-    valid_type1 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", 
-                    "aspirin", "beta blocker", "calcium channel blocker", 
-                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", 
-                    "insulin", "metformin", "niacin", "nitrate", "statin", 
-                    "sulfonylureas", "thiazolidinedione", "thienopyridine" ]
-    valid_type2 = [ "ace inhibitor", "amylin", "anti diabetes", "arb", 
-                    "aspirin", "beta blocker", "calcium channel blocker", 
-                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate", 
-                    "insulin", "metformin", "niacin", "nitrate", "statin", 
-                    "sulfonylureas", "thiazolidinedione", "thienopyridine", "" ]
+    valid_type1 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
+                   "aspirin", "beta blocker", "calcium channel blocker",
+                   "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
+                   "insulin", "metformin", "niacin", "nitrate", "statin",
+                   "sulfonylureas", "thiazolidinedione", "thienopyridine"]
+    valid_type2 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
+                   "aspirin", "beta blocker", "calcium channel blocker",
+                   "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
+                   "insulin", "metformin", "niacin", "nitrate", "statin",
+                   "sulfonylureas", "thiazolidinedione", "thienopyridine", ""]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["type1"] = lambda v: v.lower() in MedicationTag.valid_type1
@@ -472,22 +450,19 @@ class MedicationTag(DiseaseTag):
     key = DiseaseTag.key + ["type1", "type2"]
 
 
-
-
 class DocumentTag(Tag):
     """ This type of tag models document level annotations that have been
     compiled based on sufficient annotator evidence.  It is unlike an
     AnnotatorTag and so inherits directly from the Tag class.
     """
-    tag_types = {"DIABETES" : DiabetesTag,
-                 "CAD" : CADTag,
-                 "HYPERTENSION" : HypertensionTag,
-                 "HYPERLIPIDEMIA" : HyperlipidemiaTag,
-                 "SMOKER" : SmokerTag,
-                 "OBESE" : ObeseTag,
-                 "FAMILY_HIST" : FamilyHistTag,
-                 "MEDICATION" : MedicationTag }
-
+    tag_types = {"DIABETES": DiabetesTag,
+                 "CAD": CADTag,
+                 "HYPERTENSION": HypertensionTag,
+                 "HYPERLIPIDEMIA": HyperlipidemiaTag,
+                 "SMOKER": SmokerTag,
+                 "OBESE": ObeseTag,
+                 "FAMILY_HIST": FamilyHistTag,
+                 "MEDICATION": MedicationTag}
 
     def __init__(self, element):
         super(DocumentTag, self).__init__(element)
@@ -524,11 +499,11 @@ class DocumentTag(Tag):
 
 PHI_TAG_CLASSES = [NameTag,
                    ProfessionTag,
-                   LocationTag,   
-                   AgeTag,  
-                   DateTag,       
+                   LocationTag,
+                   AgeTag,
+                   DateTag,
                    ContactTag,
-                   IDTag,   
+                   IDTag,
                    OtherTag]
 
 MEDICAL_TAG_CLASSES = [FamilyHistTag,
