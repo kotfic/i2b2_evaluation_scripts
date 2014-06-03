@@ -130,10 +130,12 @@ class TokenSequence(object):
                 "Tokenizer MUST return a list of strings with character " \
                 "length equal to text length"
 
-
+    @staticmethod
+    def tokens_to_string(tokens):
+        return ''.join([str(t) for t in tokens])
 
     def __str__(self):
-        return ''.join([str(t).encode("string_escape") for t in self.tokens])
+        return self.tokens_to_string(self.tokens).encode('string_escape')
 
 
     def __repr__(self):
