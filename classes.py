@@ -41,16 +41,20 @@ class Token(object):
     def __len__(self):
         return len(str(self))
 
+    def _get_key(self):
+        return (self.start, self.end)
+
     def __hash__(self):
-        return hash(self.start, self.end)
+        return hash(self._get_key())
 
     def __eq__(self, other):
         """ Test the equality of two tokens. Based on start and end values. 
         """
-        if other.start == self.start and other.end == self.end:
+        if other._get_key() == self._get_key() and other._get_key() == self._get_key():
             return True
 
         return False
+
 
 
 
@@ -59,7 +63,9 @@ class TokenSequence(object):
     to parse using the tokenizer() classmethod,  but can use any other subclassed
     method as long as it returns a list of Token() objects.
     """
-    tokenizer_re = re.compile(r'(\w+)')
+    tokenizer_re = re.compile(r'([a-zA-Z0-9]+)')
+
+    token_cls = Token
     
     @classmethod
     def tokenizer(cls, text, start=0):
@@ -93,7 +99,7 @@ class TokenSequence(object):
         # If we're dealing with a tag or some other mid-document location
         # skip this part
         if start == 0:
-            tokens.append(Token("", "", split_tokens[0], index, 0, 0))
+            tokens.append(cls.token_cls("", "", split_tokens[0], index, 0, 0))
             index += 1
 
         # Calculate start and end positions of the non-whitespace/punctuation
@@ -102,7 +108,7 @@ class TokenSequence(object):
             token_start = start + len(pre)
             token_end = token_start + len(token)
             start = token_end
-            tokens.append(Token(token, pre, post, index, token_start, token_end))
+            tokens.append(cls.token_cls(token, pre, post, index, token_start, token_end))
             index += 1
         
 
@@ -113,7 +119,7 @@ class TokenSequence(object):
     def __init__(self, text, tokenizer=None, start=0):
 
 
-        tokenizer = TokenSequence.tokenizer if tokenizer == None else tokenizer
+        tokenizer = self.tokenizer if tokenizer is None else tokenizer
 
         if hasattr(text, "__iter__"):            
             self.text = ''.join(str(t) for t in text)
@@ -163,6 +169,38 @@ class TokenSequence(object):
     def subseq(self, other):
         """Test if we are a subsequence of other"""
         return all([t in other.tokens for t in self.tokens])
+
+
+class PHIToken(Token):
+    def __init__(self, token, pre_ws, post_ws, index, start, end):
+        super(PHIToken, self).__init__(token, pre_ws, post_ws, index, start, end)
+        self.name = ""
+        self.TYPE = ""
+
+    def __repr__(self):
+        return "<{}: {}, {}, {}, {}, {}, i:{}, s:{}, e:{}>".format(self.__class__.__name__,
+                                                                   self.name,
+                                                                   self.TYPE,
+                                                                   self.pre_ws.__repr__(), 
+                                                                   self.token.__repr__(), 
+                                                                   self.post_ws.__repr__(), 
+                                                                   self.index,
+                                                                   self.start, self.end)
+
+    def _get_key(self):
+        return (self.name, self.TYPE, self.start, self.end)
+
+
+class PHITokenSequence(TokenSequence):
+
+    token_cls = PHIToken
+
+    def __init__(self, text, phi_tag, tokenizer=None, start=0):
+        super(PHITokenSequence, self).__init__(text, tokenizer=tokenizer, start=start)
+
+        for t in self.tokens:
+            t.name = phi_tag.name
+            t.TYPE = phi_tag.TYPE
 
 
 
@@ -675,6 +713,15 @@ class EvaluatePHI(Evaluate):
 
 
 
+class EvaluateTokenizedPHI(Evaluate):
+    def get_tagset(self, annotation):
+        return [token for tag in annotation.get_phi() 
+                for token in PHITokenSequence(
+                        annotation.text[int(tag.start):int(tag.end)],
+                        tag,
+                        start=int(tag.start))]
+
+
 class EvaluateCardiacRisk(Evaluate):
     def get_tagset(self, annotation):
         return annotation.get_doc_tags() 
@@ -743,16 +790,24 @@ class PHITrackEvaluation(CombinedEvaluation):
 
         super(PHITrackEvaluation, self).__init__()
 
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs), label="Token")
+
         # Basic Evaluation
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Strict")
-
+ 
         # Fuzzy Evaluation
         PHITag.fuzzy_end_equality(2)
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs), label="Relaxed")
-
-
+ 
+ 
         # Add HIPAA filter to evaluation arguments
         kwargs['filters'] = [PHITrackEvaluation.HIPAA_predicate_filter]
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs), 
+                      label="HIPPA Token")
+
 
         # Change equality back to strict
         PHITag.strict_equality()
