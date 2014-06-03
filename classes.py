@@ -4,7 +4,6 @@ import os
 import numpy
 from collections import defaultdict, OrderedDict
 from tags import *
-import codecs
 import copy
 
 
@@ -172,6 +171,8 @@ class TokenSequence(object):
 
 
 class PHIToken(Token):
+    """Subclass of Token,  manages PHI name and TYPE attributes which are
+    assined by the PHITokenSequence Class."""
     def __init__(self, token, pre_ws, post_ws, index, start, end):
         super(PHIToken, self).__init__(token, pre_ws, post_ws, index, start, end)
         self.name = ""
@@ -192,7 +193,8 @@ class PHIToken(Token):
 
 
 class PHITokenSequence(TokenSequence):
-
+    """PHITokenSequence class adds PHI Tag attribute information to tokens so 
+    that they can be evaluated as though they were PHI Tags."""
     token_cls = PHIToken
 
     def __init__(self, text, phi_tag, tokenizer=None, start=0):
