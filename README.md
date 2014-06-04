@@ -11,11 +11,21 @@ making a pull request. Suggestions for improvements, bugs or feature requests
 may be directed to the i2b2 evaluation scripts' issues page located at:
 https://github.com/kotfic/i2b2_evaluation_scripts/issues
 
+_Setup_
+
+This script also requires the following Python packages:
+lxml version 3.3.1
+numpy version 1.8.0
+
+If you get an error when running the script, please make sure that these
+are installed and accessible to your Python installation.
+
+
 _Running the script_
 
 This script intended to be used via
 command line:
-$&gt; python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
+python evaluate.py [cr|phi] [FLAGS] SYSTEM GOLD
 
 Where 'cr' produces Precision, Recall and F1 (P/R/F1) measure for the 
 cardiac risk task and 'phi' produces P/R/F1 for the PHI task. SYSTEM and GOLD 
@@ -24,6 +34,7 @@ the gold standard in the case of GOLD.  SYSTEM and GOLD may also be
 directories in which case all files in SYSTEM will be compared to files the 
 GOLD directory based on their file names.   See below for more information 
 on the different output the cr/phi flag produces.
+
 
 
 _File name restrictions_
@@ -40,14 +51,14 @@ _Output for Risk Factor Track_
 To compare your system output for the Risk Factor track, run the following 
 command for individual files:
 
-$&gt; python evaluate.py cr &lt;system.xm&gt; &lt;gold.xml&gt;
-(replace the file names in &lt;&gt;s with the names of your actual files)
+python evaluate.py cr {system.xml} {gold.xml}
+(replace the file names in {}s with the names of your actual files)
 
 or, to run the script on directories of files:
-$&gt; python evaluate.py cr &lt;system&gt;/ &lt;gold&gt;/
-(again, replace the folder names in &lt;&gt;s with the names of your actual folders)
+python evaluate.py cr {system}/ {gold}/
+(again, replace the folder names in {}s with the names of your actual folders)
 
-Running one of these versions will produce output that looks like this:
+Running one of these versions will produce output in this format:
 
 ```
  (# of files)            Measure        Macro (SD)     Micro               
@@ -56,8 +67,6 @@ Total                    Precision      1.0 (0.0)      1.0
                          Recall         1.0 (0.0)      1.0                 
                          F1             1.0            1.0              
 ```
-
-(Well, not exactly like this, unless your system is perfect.)
 
 The script evaluates the accuracy of your tags based on tag type 
 and all the attributes (except ID).  If you want to get more details 
@@ -71,12 +80,12 @@ _Output for De-identification Track_
 To compare your system output for the de-identification track, run the following 
 command on individual files:
 
-$&gt; python evaluate.py phi &lt;system.xml&gt; &lt;gold.xml&gt;
-(replace the file names in &lt;&gt;s with the names of your actual files)
+python evaluate.py phi {system.xml} {gold.xml}
+(replace the file names in {}s with the names of your actual files)
 
 or, to run the script on directories of files:
-$&gt; python evaluate.py phi&lt;system&gt;/ &lt;gold&gt;/
-(again, replace the folder names in &lt;&gt;s with the names of your actual folders)
+python evaluate.py phi {system}/ {gold}/
+(again, replace the folder names in {}s with the names of your actual folders)
 
 
 Running one of these versions wil produce output that looks like this:
@@ -146,7 +155,7 @@ _Verbose flag_
 To get document-by-document information about the accuracy of your tags, you can use the
 "-v" or "--verbose" flag.  For example:
 
-$&gt; python evaluate.py cr -v system/ gold/
+python evaluate.py cr -v system/ gold/
 
 
 _Advanced useage_
@@ -172,36 +181,36 @@ Advanced Flags:
 
 Advanced Examples:
 
-$&gt; python evaluate.py cr --filter MEDICATION system/ gold/ 
+python evaluate.py cr --filter MEDICATION system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only MEDICATION tags
 
-$&gt; python evaluate.py cr --filter CAD,OBESE system/ gold/ 
+python evaluate.py cr --filter CAD,OBESE system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only CAD or OBESE tags. Comma separated lists to the --filter flag are con-
 joined via OR.
 
-$&gt; python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
+python evaluate.py cr --filter "CAD,before DCT" system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 only CAD *OR* tags with a time attribute of before DCT. This is probably 
 not what you want when filtering, see the next example
 
-$&gt; python evaluate.py cr --conjunctive \
+python evaluate.py cr --conjunctive \
                          --filter "CAD,before DCT" system/ gold/ 
 
   Evaluate system output in system/ folder against gold/ folder considering
 CAD tags *AND* tags with a time attribute of before DCT.
 
-$&gt; python evaluate.py cr --invert \
+python evaluate.py cr --invert \
                          --filter MEDICATION system/ gold/
 
  Evaluate system output in system/ folder against gold/ folder considering
 any tag which is NOT a MEDICATION tag.
 
-$&gt; python evaluate.py cr --invert \
+python evaluate.py cr --invert \
                          --conjunctive \
                          --filter "CAD,before DCT" system/ gold/ 
 
