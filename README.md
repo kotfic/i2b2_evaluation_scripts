@@ -1,7 +1,7 @@
 **i2b2 2014 Evaluation Script**
 
-This script is distributed as apart of the i2b2 2014 Cardiac Risk and 
-Personal Health-care Information (PHI) tasks. 
+This script is distributed as a part of the i2b2 2014 Cardiac Risk and 
+Protected Health Information (PHI) tasks. 
 
 If you would like to contribute to this project, pull requests are welcome.
 Please see: https://help.github.com/articles/fork-a-repo for instructions
