@@ -525,7 +525,7 @@ class Evaluate(object):
         self.sys_id = s_sas.values()[0].sys_id
 
         for doc_id in list(set(s_sas.keys()) & set(g_sas.keys())):
-            if filters is None:
+            if filters is not None:
                 # Get all doc tags for each tag that passes all the
                 # predicate functions in filters
                 if conjunctive:
@@ -591,7 +591,7 @@ class Evaluate(object):
                           for tp, fp in zip(self.tp, self.fp)])
         return (np.mean(), np.std())
 
-    def micro_recall(self, tp, fn):
+    def micro_recall(self):
         try:
             return sum([len(t) for t in self.tp]) /  \
                 float(sum([len(t) for t in self.tp]) +
@@ -599,7 +599,7 @@ class Evaluate(object):
         except ZeroDivisionError:
             return 0.0
 
-    def micro_precision(self, tp, fp):
+    def micro_precision(self):
         try:
             return sum([len(t) for t in self.tp]) /  \
                 float(sum([len(t) for t in self.tp]) +
@@ -636,14 +636,14 @@ class Evaluate(object):
     def _print_summary(self):
         Mp, Mp_std = self.macro_precision()
         Mr, Mr_std = self.macro_recall()
-        mp = self.micro_precision(self.tp, self.fp)
-        mr = self.micro_recall(self.tp, self.fn)
+        mp = self.micro_precision()
+        mr = self.micro_recall()
 
         str_fmt = "{:<25}{:<15}{:<15}{:<20}"
 
         print(str_fmt.format(self.sys_id +
                              " ({})".format(len(self.doc_ids)),
-                             "Measure", "Macro (SD)", "Micro"))
+                             "Measure", "Macro (SD)", "Micro (Primary)"))
 
         print("{:-<25}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
 
@@ -665,7 +665,7 @@ class Evaluate(object):
 
     def print_docs(self):
         print("Report for {}:".format(self.sys_id))
-        print("{:<25}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro"))
+        print("{:<25}{:<15}{:<15}{:<20}".format("", "Measure", "", "Micro (Primary)"))
         print("{:-<25}{:-<15}{:-<15}{:-<20}".format("", "", "", ""))
         self._print_docs()
 
