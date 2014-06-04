@@ -124,13 +124,13 @@ from classes import StandoffAnnotation, Evaluate, CombinedEvaluation, \
 import argparse
 import os
 from collections import defaultdict
-from tags import DocumentTag, MEDICAL_TAG_CLASSES
+from tags import DocumentTag, PHITag, MEDICAL_TAG_CLASSES
 
 
 # This function is 'exterimental' as in it works for my use cases
 # But is not generally well documented or a part of the expected
 # workflow.
-def get_predicate_function(arg):
+def get_predicate_function(arg, tag):
     """ This function takes a tag attribute value, determines the attribute(s)
     of the class(es) this value belongs to,  and then returns a predicate
     function that returns true if this value is set for the  calculated
@@ -145,7 +145,7 @@ def get_predicate_function(arg):
 
     # Get a list of valid attributes for this argument
     # If we have a tag name (ie. MEDICATION) add 'name' to the attributes
-    if arg in DocumentTag.tag_types.keys():
+    if arg in tag.tag_types.keys():
         attrs.append("name")
     else:
         tag_attributes = ["valid_type1", "valid_type2", "valid_indicator",
@@ -333,7 +333,7 @@ if __name__ == "__main__":
                  verbose=args.verbose,
                  invert=args.invert,
                  conjunctive=args.conjunctive,
-                 filters=[get_predicate_function(a)
+                 filters=[get_predicate_function(a, PHITag if args.sp == "phi" else DocumentTag)
                           for a in args.filter.split(",")])
     else:
         evaluate(args.from_dirs, args.to_dir,
