@@ -533,6 +533,10 @@ class Evaluate(object):
         self.sys_id = s_sas.values()[0].sys_id
 
         for doc_id in list(set(s_sas.keys()) & set(g_sas.keys())):
+
+            assert g_sas[doc_id].text == s_sas[doc_id].text, \
+                "Annotation text for document {}.xml differs!".format(doc_id)
+
             if filters is not None:
                 # Get all doc tags for each tag that passes all the
                 # predicate functions in filters
