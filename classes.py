@@ -25,7 +25,7 @@ class Token(object):
         self.post_ws = post_ws
 
     def __repr__(self):
-        format_str = "<{}: {}, {}, {}, i:{}, s:{}, e:{}>"
+        format_str = u"<{}: {}, {}, {}, i:{}, s:{}, e:{}>"
         return format_str.format(self.__class__.__name__,
                                  self.pre_ws.__repr__(),
                                  self.token.__repr__(),
@@ -33,11 +33,20 @@ class Token(object):
                                  self.index,
                                  self.start, self.end)
 
+
+    def to_string(self):
+        if self.index == 0:
+            s = self.pre_ws + self.token + self.post_ws
+        else:
+            s = self.token + self.post_ws
+
+        return s
+
     def __str__(self):
-        return self.token + self.post_ws
+        return self.to_string()
 
     def __len__(self):
-        return len(str(self))
+        return len(self.to_string())
 
     def _get_key(self):
         return (self.start, self.end)
@@ -74,6 +83,12 @@ class TokenSequence(object):
         # [WHTEPSACE, TOKEN, WHITESPACE, TOKEN ...]
         split_tokens = re.split(cls.tokenizer_re, text)
 
+        # Handle Special case where there is only whitespace at the 
+        # begining of text. This will add an empty token to the list
+        # but will preserve the leading whitespace
+        if len(split_tokens) == 1:
+            split_tokens.extend(["", ""])
+
         # This generates trigrams from the list in the form
         # [(WHITESPACE, TOKEN, WHITESPACE),
         #  (TOKEN, WHITESPACE, TOKEN),
@@ -92,14 +107,6 @@ class TokenSequence(object):
         tokens = []
         index = 0
 
-        # Add a dummy token that accounts for the leading whitespace
-        # But only if we're starting at the begining of a document
-        # If we're dealing with a tag or some other mid-document location
-        # skip this part
-        if start == 0:
-            tokens.append(cls.token_cls("", "", split_tokens[0], index, 0, 0))
-            index += 1
-
         # Calculate start and end positions of the non-whitespace/punctuation
         # and append the token with its index into the list of tokens.
         for pre, token, post in token_tuples:
@@ -117,7 +124,7 @@ class TokenSequence(object):
         tokenizer = self.tokenizer if tokenizer is None else tokenizer
 
         if hasattr(text, "__iter__"):
-            self.text = ''.join(str(t) for t in text)
+            self.text = ''.join(t.to_string() for t in text)
             self.tokens = text
 
         else:
@@ -126,20 +133,21 @@ class TokenSequence(object):
 
         # If start is 0 we assume we're parsing a whole document
         # and not a sub-string of tokens.
-        if start == 0:
-            assert len(self.text) == sum(len(t) for t in self.tokens), \
-                "Tokenizer MUST return a list of strings with character " \
-                "length equal to text length"
+        # if start == 0:
+        assert len(self.text) == sum(len(t) for t in self.tokens), \
+            u"Tokenizer MUST return a list of strings with character " \
+            "length equal to text length. \n\n{}\n\n{}".format(self.text,
+                                                               u"".join([t.to_string() for t in self.tokens]))
 
     @staticmethod
     def tokens_to_string(tokens):
-        return ''.join([str(t) for t in tokens])
+        return ''.join([t.to_string() for t in tokens])
 
     def __str__(self):
         return self.tokens_to_string(self.tokens).encode('string_escape')
 
     def __repr__(self):
-        fstr = "<{} '{}', s:{}, e:{}>"
+        fstr = u"<{} '{}', s:{}, e:{}>"
         return fstr.format(self.__class__.__name__,
                            str(self) if len(str(self)) < 40
                            else str(self)[:37] + "...",
@@ -525,6 +533,10 @@ class Evaluate(object):
         self.sys_id = s_sas.values()[0].sys_id
 
         for doc_id in list(set(s_sas.keys()) & set(g_sas.keys())):
+
+            assert g_sas[doc_id].text == s_sas[doc_id].text, \
+                "Annotation text for document {}.xml differs!".format(doc_id)
+
             if filters is not None:
                 # Get all doc tags for each tag that passes all the
                 # predicate functions in filters

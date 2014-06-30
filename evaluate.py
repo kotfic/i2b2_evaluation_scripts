@@ -212,8 +212,10 @@ def get_document_dict_by_system_id(system_dirs):
 
     for d in system_dirs:
         for fn in os.listdir(d):
-            sa = StandoffAnnotation(d + fn)
-            documents[sa.sys_id][sa.id] = sa
+            # Only look at xml files
+            if fn.endswith("xml"):
+                sa = StandoffAnnotation(d + fn)
+                documents[sa.sys_id][sa.id] = sa            
 
     return documents
 
@@ -241,6 +243,12 @@ def evaluate(system, gs, eval_class, **kwargs):
         del kwargs['verbose']
     except KeyError:
         verbose = False
+
+    assert os.path.exists(gs), "{} does not exist!".format(gs)
+
+    for s in system:
+        assert os.path.exists(s), "{} does not exist!".format(s)
+
 
     # Handle if two files were passed on the command line
     if os.path.isfile(system[0]) and os.path.isfile(gs):
