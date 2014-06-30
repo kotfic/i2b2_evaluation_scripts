@@ -449,6 +449,16 @@ class MedicationTag(DiseaseTag):
 
     key = DiseaseTag.key + ["type1", "type2"]
 
+    def _get_key(self):        
+        key = []
+        self.type1, self.type2 = sorted([self.type1, self.type2], reverse=True)
+
+        for k in self.key:
+            key.append(getattr(self, k))
+
+        return tuple(key)
+
+
 
 class DocumentTag(Tag):
     """ This type of tag models document level annotations that have been
