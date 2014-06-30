@@ -478,6 +478,7 @@ class DocumentTag(Tag):
         super(DocumentTag, self).__init__(element)
 
         self.key = self.tag_types[self.name].key
+
         self.attributes = self.tag_types[self.name].attributes
 
         self.annotator_tags = []
@@ -491,6 +492,12 @@ class DocumentTag(Tag):
         for e in element:
             cls = self.tag_types[e.tag]
             self.annotator_tags.append(cls(e))
+
+    def _get_key(self):
+        # Sort of a hack - convert document tag to specific tag 
+        # type and return _get_key() value. 
+        return self.toTagType()._get_key()
+
 
     def toTagType(self):
         element = super(DocumentTag, self).toElement()
