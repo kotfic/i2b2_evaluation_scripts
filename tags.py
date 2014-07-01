@@ -356,14 +356,16 @@ class FamilyHistTag(AnnotatorTag):
         # cleaning.  However we require an indicator to be a valid tag after
         # cleaning,  this causes some unfortunate hacking here to ensure that
         # an indicator tag is present before any validation happens.
-        try:
-            if int(element.attrib['start']) != -1 and \
-               int(element.attrib['end']) != -1:
-                element.attrib['indicator'] = "present"
-            else:
+        if 'indicator' not in element.attrib.keys():
+            try:
+                if int(element.attrib['start']) != -1 and \
+                   int(element.attrib['end']) != -1:
+                    element.attrib['indicator'] = "present"
+                else:
+                    element.attrib['indicator'] = "not present"
+            except (AttributeError, KeyError):
                 element.attrib['indicator'] = "not present"
-        except (AttributeError, KeyError):
-            element.attrib['indicator'] = "not present"
+        
 
         super(FamilyHistTag, self).__init__(element)
 
