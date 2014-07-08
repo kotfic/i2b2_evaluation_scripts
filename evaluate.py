@@ -214,6 +214,7 @@ def get_document_dict_by_system_id(system_dirs):
         for fn in os.listdir(d):
             # Only look at xml files
             if fn.endswith("xml"):
+#                print("Loading {}".format(d+fn))
                 sa = StandoffAnnotation(d + fn)
                 documents[sa.sys_id][sa.id] = sa            
 
@@ -283,6 +284,7 @@ def evaluate(system, gs, eval_class, **kwargs):
     return evaluations[0] if len(evaluations) == 1 else evaluations
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="To Write")
 
@@ -335,16 +337,75 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.filter:
-        evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else
-                 CardiacRiskTrackEvaluation,
-                 verbose=args.verbose,
-                 invert=args.invert,
-                 conjunctive=args.conjunctive,
-                 filters=[get_predicate_function(a, PHITag if args.sp == "phi" else DocumentTag)
-                          for a in args.filter.split(",")])
+        e = evaluate(args.from_dirs, args.to_dir,
+                     PHITrackEvaluation if args.sp == "phi" else
+                     CardiacRiskTrackEvaluation,
+                     verbose=args.verbose,
+                     invert=args.invert,
+                     conjunctive=args.conjunctive,
+                     filters=[get_predicate_function(a, PHITag if args.sp == "phi" else DocumentTag)
+                              for a in args.filter.split(",")])
     else:
-        evaluate(args.from_dirs, args.to_dir,
-                 PHITrackEvaluation if args.sp == "phi" else
-                 CardiacRiskTrackEvaluation,
-                 verbose=args.verbose)
+        e = evaluate(args.from_dirs, args.to_dir,
+                     PHITrackEvaluation if args.sp == "phi" else
+                     CardiacRiskTrackEvaluation,
+                     verbose=args.verbose)
+        
+
+### Added to grab summary P/R/F1 statistics and put them in CSV's for each team
+
+    def to_summary_dict(e):
+        Mp, Mp_std = e.macro_precision()
+        Mr, Mr_std = e.macro_recall()
+        mp = e.micro_precision()
+        mr = e.micro_recall()
+        F_B = Evaluate.F_beta(Mp, Mr)
+        f_B = Evaluate.F_beta(mr, mp)
+    
+        return {
+            "Num Files": len(e.doc_ids),
+            "Macro Precision": Mp,
+            "Macro Precision (std)": Mp_std,
+            "Macro Recall": Mr, 
+            "Macro Recall (std)": Mr_std,
+            "Micro Preceision": mp,
+            "Micro Recall": mr,
+            "Macro F1": F_B,
+            "Micro F1": f_B}
+
+
+    def to_summary_dicts(e):
+        lines = []
+        if hasattr(e, "evaluations"):
+            for evaluation in e.evaluations:
+                line = to_summary_dict(evaluation)
+                line['Type'] = evaluation.sys_id
+                lines.append(line)
+        else:
+            line = to_summary_dict(e)
+            line["Type"] = ""
+            lines.append(line)
+            
+        return lines
+        
+
+    import csv
+ 
+    dirs = args.from_dirs[0].split("/")
+ 
+    run, team_id = dirs[-2], dirs[-3]
+    lines = to_summary_dicts(e)
+ 
+ 
+    keys = ["Task", "Run", "Team", "Type"]
+    keys.extend(lines[0].keys())
+ 
+    with open(os.path.join(*dirs[:-2]) + "/{}_{}.csv".format(team_id, run), "w") as fh:     
+        dw = csv.DictWriter(fh, fieldnames=keys)
+ 
+        dw.writeheader()
+        for line in lines:
+            line['Task'] = "1" if args.sp == "phi" else "2"
+            line['Run'] = run
+            line['Team'] = team_id
+            dw.writerow(line)

@@ -180,13 +180,13 @@ class AnnotatorTag(Tag):
                     fstr = "WARNING: Expected attribute '{}' for xml element "
                     fstr += "<{} ({})>  was not valid ('{}')"
                     print(fstr.format(k, element.tag,
-                                      element.attrib['id'],
+                                      element.attrib['id'] if 'id' in element.attrib.keys() else '',
                                       element.attrib[k]))
                     setattr(self, k, element.attrib[k])
 
             elif k in self.key:
-                fstr = "WARNING: Expected attribute '%s' for xml element "
-                fstr += "<%s ('%s')>, setting to ''"
+                fstr = "WARNING: Expected attribute '{}' for xml element "
+                fstr += "<{} ('{}')>, setting to ''"
                 print(fstr.format(k, element.tag, element.attrib['id']))
 
                 setattr(self, k, '')

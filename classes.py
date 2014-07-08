@@ -565,6 +565,7 @@ class Evaluate(object):
 
             else:
                 gold = set(self.get_tagset(g_sas[doc_id]))
+#               print("Evaluating {}".format(doc_id))
                 sys = set(self.get_tagset(s_sas[doc_id]))
 
             self.tp.append(gold.intersection(sys))
