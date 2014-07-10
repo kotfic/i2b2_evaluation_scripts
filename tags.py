@@ -438,13 +438,21 @@ class MedicationTag(DiseaseTag):
     valid_type1 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
+<<<<<<< HEAD
                    "GLP1 agonists", "meglitinides", "insulin", "metformin", 
+=======
+                   "glp1 agonists", "meglitinides", "insulin", "metformin", 
+>>>>>>> master
                    "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
                    "thiazolidinedione", "thienopyridine"]
     valid_type2 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
+<<<<<<< HEAD
                    "GLP1 agonists", "meglitinides", "insulin", "metformin", 
+=======
+                   "glp1 agonists", "meglitinides", "insulin", "metformin", 
+>>>>>>> master
                    "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
                    "thiazolidinedione", "thienopyridine", ""]
 
