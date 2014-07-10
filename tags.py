@@ -433,17 +433,18 @@ class ObeseTag(DiseaseTag):
     key = DiseaseTag.key + ["indicator"]
 
 
+
 class MedicationTag(DiseaseTag):
     valid_type1 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "GLP1 agonists" "meglitinides", "insulin", "metformin", 
+                   "GLP1 agonists", "meglitinides", "insulin", "metformin", 
                    "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
                    "thiazolidinedione", "thienopyridine"]
     valid_type2 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "GLP1 agonists" "meglitinides", "insulin", "metformin", 
+                   "GLP1 agonists", "meglitinides", "insulin", "metformin", 
                    "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
                    "thiazolidinedione", "thienopyridine", ""]
 
