@@ -437,13 +437,15 @@ class MedicationTag(DiseaseTag):
     valid_type1 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "insulin", "metformin", "niacin", "nitrate", "statin",
-                   "sulfonylureas", "thiazolidinedione", "thienopyridine"]
+                   "meglitinides", "insulin", "metformin", "niacin", "nitrate", 
+                   "statin", "sulfonylureas", "thiazolidinedione", 
+                   "thienopyridine"]
     valid_type2 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "insulin", "metformin", "niacin", "nitrate", "statin",
-                   "sulfonylureas", "thiazolidinedione", "thienopyridine", ""]
+                   "meglitinides", "insulin", "metformin", "niacin", "nitrate", 
+                   "statin", "sulfonylureas", "thiazolidinedione", 
+                   "thienopyridine", ""]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["type1"] = lambda v: v.lower() in MedicationTag.valid_type1
