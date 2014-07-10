@@ -270,7 +270,7 @@ class PHITag(AnnotatorTag):
                   "MEDICALRECORD", "HEALTHPLAN", "ACCOUNT", "LICENSE",
                   "VEHICLE", "DEVICE", "BIOID", "IDNUM"]
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes['TYPE'] = lambda v: v in PHITag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in PHITag.valid_TYPE
 
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
 
@@ -284,51 +284,51 @@ class PHITag(AnnotatorTag):
 class NameTag(PHITag):
     valid_TYPE = ['PATIENT', 'DOCTOR', 'USERNAME']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in NameTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in NameTag.valid_TYPE
 
 
 class ProfessionTag(PHITag):
     valid_TYPE = ["PROFESSION"]
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in ProfessionTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in ProfessionTag.valid_TYPE
 
 
 class LocationTag(PHITag):
     valid_TYPE = ['ROOM', 'DEPARTMENT', 'HOSPITAL', 'ORGANIZATION', 'STREET',
                   'CITY', 'STATE', 'COUNTRY', 'ZIP', 'LOCATION-OTHER']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in LocationTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in LocationTag.valid_TYPE
 
 
 class AgeTag(PHITag):
     valid_TYPE = ['AGE']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in AgeTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in AgeTag.valid_TYPE
 
 
 class DateTag(PHITag):
     valid_TYPE = ['DATE']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in DateTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in DateTag.valid_TYPE
 
 
 class ContactTag(PHITag):
     valid_TYPE = ['PHONE', 'FAX', 'EMAIL', 'URL', 'IPADDR']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in ContactTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in ContactTag.valid_TYPE
 
 
 class IDTag(PHITag):
     valid_TYPE = ['SSN', 'MEDICALRECORD', 'HEALTHPLAN', 'ACCOUNT',
                   'LICENSE', 'VEHICLE', 'DEVICE', 'BIOID', 'IDNUM']
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in IDTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in IDTag.valid_TYPE
 
 
 class OtherTag(PHITag):
     valid_TYPE = 'OTHER'
     attributes = OrderedDict(PHITag.attributes.items())
-    attributes['TYPE'] = lambda v: v in OtherTag.valid_TYPE
+    attributes['TYPE'] = lambda v: v.upper() in OtherTag.valid_TYPE
 
 
 PHITag.tag_types = {
@@ -347,7 +347,7 @@ class FamilyHistTag(AnnotatorTag):
     valid_indicator = ["present", "not present"]
 
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes['indicator'] = lambda v: v in FamilyHistTag.valid_indicator
+    attributes['indicator'] = lambda v: v.lower() in FamilyHistTag.valid_indicator
 
     key = AnnotatorTag.key + ["indicator"]
 
@@ -374,25 +374,25 @@ class SmokerTag(AnnotatorTag):
     valid_status = ["current", "past", "ever", "never", "unknown"]
 
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes["status"] = lambda v: v in SmokerTag.valid_status
+    attributes["status"] = lambda v: v.lower() in SmokerTag.valid_status
 
     key = AnnotatorTag.key + ["status"]
 
 
 class DiseaseTag(AnnotatorTag):
-    valid_time = ["before DCT", "during DCT", "after DCT", "continuing"]
+    valid_time = ["before dct", "during dct", "after dct", "continuing"]
 
     attributes = OrderedDict(AnnotatorTag.attributes.items())
-    attributes["time"] = lambda v: v in DiseaseTag.valid_time
+    attributes["time"] = lambda v: v.lower() in DiseaseTag.valid_time
 
     key = AnnotatorTag.key + ["time"]
 
 
 class DiabetesTag(DiseaseTag):
-    valid_indicator = ["mention", "A1C", "glucose"]
+    valid_indicator = ["mention", "a1c", "glucose"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
-    attributes["indicator"] = lambda v: v in DiabetesTag.valid_indicator
+    attributes["indicator"] = lambda v: v.lower() in DiabetesTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
 
@@ -401,7 +401,7 @@ class CADTag(DiseaseTag):
     valid_indicator = ["mention", "event", "test", "symptom"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
-    attributes["indicator"] = lambda v: v in CADTag.valid_indicator
+    attributes["indicator"] = lambda v: v.lower() in CADTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
 
@@ -416,19 +416,19 @@ class HypertensionTag(DiseaseTag):
 
 
 class HyperlipidemiaTag(DiseaseTag):
-    valid_indicator = ["mention",  "high chol.",  "high LDL"]
+    valid_indicator = ["mention",  "high chol.",  "high ldl"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
-    attributes["indicator"] = lambda v: v in HyperlipidemiaTag.valid_indicator
+    attributes["indicator"] = lambda v: v.lower() in HyperlipidemiaTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
 
 
 class ObeseTag(DiseaseTag):
-    valid_indicator = ["mention", "BMI", "waist circum."]
+    valid_indicator = ["mention", "bmi", "waist circum."]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
-    attributes["indicator"] = lambda v: v in ObeseTag.valid_indicator
+    attributes["indicator"] = lambda v: v.lower() in ObeseTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
 
