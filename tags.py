@@ -416,7 +416,7 @@ class HypertensionTag(DiseaseTag):
 
 
 class HyperlipidemiaTag(DiseaseTag):
-    valid_indicator = ["mention",  "high chol.",  "high ldl"]
+    valid_indicator = ["mention",  "high chol.",  "high ldl", "high-ldl", "high-chol"]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["indicator"] = lambda v: v.lower() in HyperlipidemiaTag.valid_indicator
@@ -437,15 +437,15 @@ class MedicationTag(DiseaseTag):
     valid_type1 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "meglitinides", "insulin", "metformin", "niacin", "nitrate", 
-                   "statin", "sulfonylureas", "thiazolidinedione", 
-                   "thienopyridine"]
+                   "GLP1 agonists" "meglitinides", "insulin", "metformin", 
+                   "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
+                   "thiazolidinedione", "thienopyridine"]
     valid_type2 = ["ace inhibitor", "amylin", "anti diabetes", "arb",
                    "aspirin", "beta blocker", "calcium channel blocker",
                    "diuretic", "dpp4 inhibitors", "ezetimibe", "fibrate",
-                   "meglitinides", "insulin", "metformin", "niacin", "nitrate", 
-                   "statin", "sulfonylureas", "thiazolidinedione", 
-                   "thienopyridine", ""]
+                   "GLP1 agonists" "meglitinides", "insulin", "metformin", 
+                   "niacin", "nitrate", "obesity", "statin", "sulfonylureas", 
+                   "thiazolidinedione", "thienopyridine", ""]
 
     attributes = OrderedDict(DiseaseTag.attributes.items())
     attributes["type1"] = lambda v: v.lower() in MedicationTag.valid_type1
