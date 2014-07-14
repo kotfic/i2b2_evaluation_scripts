@@ -390,6 +390,7 @@ if __name__ == "__main__":
         
 
     import csv
+    import pandas as pd
  
     dirs = args.from_dirs[0].split("/")
  
@@ -400,6 +401,7 @@ if __name__ == "__main__":
     keys = ["Task", "Run", "Team", "Type"]
     keys.extend(lines[0].keys())
  
+    # Write summary statistics CSV
     with open(os.path.join(*dirs[:-2]) + "/{}_{}.csv".format(team_id, run), "w") as fh:     
         dw = csv.DictWriter(fh, fieldnames=keys)
  
@@ -409,3 +411,67 @@ if __name__ == "__main__":
             line['Run'] = run
             line['Team'] = team_id
             dw.writerow(line)
+
+
+    # Write out tp/fp/fn to csv
+    # If we have a vanila evluation object supe it up to look like a combined eval
+    if not hasattr(e, "evaluations"):
+        class Object(object):
+            def __init__(self, **kwargs):
+                for k,v in kwargs.items():
+                    setattr(self, k, w)
+        
+        e = Object(evaluation=e)
+        
+
+
+#    import pudb    
+#    pu.db
+
+    dicts = []
+    for evaluation in e.evaluations:
+        for tag_type, tag_list in [("TP", evaluation.tp), 
+                                   ("FP", evaluation.fp), 
+                                   ("FN", evaluation.fn)]:
+            for i, tags in zip(evaluation.doc_ids, tag_list):
+                for tag in tags:
+                    if args.sp == "phi":
+                        try:
+                            tag_dict = tag.toDict(attributes=["name", "start", 
+                                                              "end", "TYPE", "text"])
+                        # Token's don't implement toDict
+                        except AttributeError:
+                            tag_dict = { k:getattr(tag, k) for k in ["name", "start", 
+                                                                     "end", "TYPE"]}
+                            tag_dict["text"] = getattr(tag,"token")
+
+                    else:
+                        tag_dict = tag.toDict(attributes=["id", "name", "indicator", 
+                                                          "time", "status", "type1", "type2" ])
+                    
+                    tag_dict["Tag Type"] = tag_type
+                    tag_dict["Track"] = 1 if args.sp == "phi" else 2
+
+                    if run == "run_1":
+                        tag_dict["Run"] = 1
+                    elif run == "run_2":
+                        tag_dict["Run"] = 2
+                    elif run == "run_3":
+                        tag_dict["Run"] = 3
+                    else:
+                        tag_dict["Run"] = None
+
+                    tag_dict["Team"] = int(team_id)
+                    tag_dict["Doc ID"] = i
+                    tag_dict["Eval Type"] = evaluation.sys_id if evaluation.sys_id != "" else "RiskFactor"
+                
+                    dicts.append(tag_dict)
+            
+        
+    systems = pd.read_csv("/home/ckotfila/i2b2_2014/system_submissions.csv", 
+                          true_values=["yes"], 
+                          false_values=["no"])
+
+    df = pd.merge(pd.DataFrame(dicts), systems, on=["Team", "Track", "Run"], how="left")
+    
+    df.to_csv(os.path.join(*dirs[:-2]) + "/{}_{}_tags.csv".format(team_id, run), index=False)
