@@ -407,8 +407,17 @@ if __name__ == "__main__":
  
         dw.writeheader()
         for line in lines:
-            line['Task'] = "1" if args.sp == "phi" else "2"
-            line['Run'] = run
+            line['Task'] = 1 if args.sp == "phi" else 2
+
+            if run == "run_1":
+                line["Run"] = 1
+            elif run == "run_2":
+                line["Run"] = 2
+            elif run == "run_3":
+                line["Run"] = 3
+            else:
+                line["Run"] = None
+
             line['Team'] = team_id
             dw.writerow(line)
 
