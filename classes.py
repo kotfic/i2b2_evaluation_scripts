@@ -534,8 +534,7 @@ class Evaluate(object):
 
         for doc_id in list(set(s_sas.keys()) & set(g_sas.keys())):
 
-            assert g_sas[doc_id].text == s_sas[doc_id].text, \
-                "Annotation text for document {}.xml differs!".format(doc_id)
+            self.validate_text(g_sas[doc_id].text, s_sas[doc_id].text, doc_id)
 
             if filters is not None:
                 # Get all doc tags for each tag that passes all the
@@ -691,6 +690,11 @@ class Evaluate(object):
     def get_tagset(self, annotation):
         raise Exception("Must be implemented by Subclass!")
 
+    def validate_text(self, gold_text, system_text, doc_id):
+        assert gold_text == system_text, \
+            "Annotation text for document {}.xml differs!".format(doc_id)
+
+
 
 class EvaluatePHI(Evaluate):
     def get_tagset(self, annotation):
@@ -710,6 +714,8 @@ class EvaluateCardiacRisk(Evaluate):
     def get_tagset(self, annotation):
         return annotation.get_doc_tags()
 
+    def validate_text(self, gold_text, system_text, doc_id):
+        pass
 
 class CombinedEvaluation(object):
     """Base class for running multiple evaluations. This has a similar function
