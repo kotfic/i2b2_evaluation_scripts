@@ -364,14 +364,14 @@ if __name__ == "__main__":
     
         return {
             "Num Files": len(e.doc_ids),
-            "Macro Precision": Mp,
-            "Macro Precision (std)": Mp_std,
-            "Macro Recall": Mr, 
-            "Macro Recall (std)": Mr_std,
-            "Micro Preceision": mp,
-            "Micro Recall": mr,
-            "Macro F1": F_B,
-            "Micro F1": f_B}
+            "Macro Precision": "{:.4}".format(Mp),
+            "Macro Precision (std)": "{:.2}".format(Mp_std),
+            "Macro Recall": "{:.4}".format(Mr), 
+            "Macro Recall (std)": "{:.2}".format(Mr_std),
+            "Micro Preceision": "{:.4}".format(mp),
+            "Micro Recall": "{:.4}".format(mr),
+            "Macro F1": "{:.4}".format(F_B),
+            "Micro F1": "{:.4}".format(f_B)}
 
 
     def to_summary_dicts(e):
