@@ -180,14 +180,16 @@ class AnnotatorTag(Tag):
                     fstr = "WARNING: Expected attribute '{}' for xml element "
                     fstr += "<{} ({})>  was not valid ('{}')"
                     print(fstr.format(k, element.tag,
-                                      element.attrib['id'] if 'id' in element.attrib.keys() else '',
+                                      element.attrib['id'] 
+                                      if 'id' in element.attrib.keys() else '',
                                       element.attrib[k]))
                     setattr(self, k, element.attrib[k])
 
             elif k in self.key:
-                fstr = "WARNING: Expected attribute '{}' for xml element "
-                fstr += "<{} ('{}')>, setting to ''"
-                print(fstr.format(k, element.tag, element.attrib['id']))
+                fstr = "WARNING: Expected attribute '%s' for xml element "
+                fstr += "<%s ('%s')>, setting to ''"
+                print(fstr.format(k, element.tag, element.attrib['id'] 
+                                  if 'id' in element.attrib.keys() else ''))
 
                 setattr(self, k, '')
 
@@ -431,7 +433,6 @@ class ObeseTag(DiseaseTag):
     attributes["indicator"] = lambda v: v.lower() in ObeseTag.valid_indicator
 
     key = DiseaseTag.key + ["indicator"]
-
 
 
 class MedicationTag(DiseaseTag):
