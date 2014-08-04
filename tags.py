@@ -49,7 +49,7 @@ class Tag(object):
     def __init__(self, element):
         self.name = element.tag
         try:
-            self.id = element.attrib['id'].lower()
+            self.id = element.attrib['id']
         except KeyError:
             self.id = ""
 
@@ -175,23 +175,23 @@ class AnnotatorTag(Tag):
         for k, validp in self.attributes.items():
             if k in element.attrib.keys():
                 if validp(element.attrib[k]):
-                    setattr(self, k.lower(), element.attrib[k].lower())
+                    setattr(self, k, element.attrib[k])
                 else:
                     fstr = "WARNING: Expected attribute '{}' for xml element "
                     fstr += "<{} ({})>  was not valid ('{}')"
-                    print(fstr.format(k.lower(), element.tag,
-                                      element.attrib['id'].lower() 
+                    print(fstr.format(k, element.tag,
+                                      element.attrib['id']
                                       if 'id' in element.attrib.keys() else '',
-                                      element.attrib[k].lower()))
-                    setattr(self, k.lower(), element.attrib[k].lower())
+                                      element.attrib[k]))
+                    setattr(self, k, element.attrib[k])
 
             elif k in self.key:
-                fstr = "WARNING: Expected attribute '%s' for xml element "
-                fstr += "<%s ('%s')>, setting to ''"
-                print(fstr.format(k.lower(), element.tag, element.attrib['id'].lower() 
+                fstr = "WARNING: Expected attribute '{}' for xml element "
+                fstr += "<{} ('{}')>, setting to ''"
+                print(fstr.format(k, element.tag, element.attrib['id']
                                   if 'id' in element.attrib.keys() else ''))
 
-                setattr(self, k.lower(), '')
+                setattr(self, k, '')
 
     @classmethod
     def fuzzy_end_equality(cls, distance):
@@ -275,6 +275,12 @@ class PHITag(AnnotatorTag):
     attributes['TYPE'] = lambda v: v.upper() in PHITag.valid_TYPE
 
     key = AnnotatorTag.key + ["start", "end", "TYPE"]
+
+    def _get_key(self):
+        key = []
+        for k in self.key:
+            key.append(getattr(self, k).upper())
+        return tuple(key)
 
     def exact_equals(self, other):
         pass
@@ -491,7 +497,7 @@ class DocumentTag(Tag):
 
         for k in self.key:
             try:
-                setattr(self, k.lower(), element.attrib[k].lower())
+                setattr(self, k, element.attrib[k].lower())
             except KeyError:
                 continue
 
