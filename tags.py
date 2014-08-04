@@ -49,14 +49,14 @@ class Tag(object):
     def __init__(self, element):
         self.name = element.tag
         try:
-            self.id = element.attrib['id']
+            self.id = element.attrib['id'].lower()
         except KeyError:
             self.id = ""
 
     def _get_key(self):
         key = []
         for k in self.key:
-            key.append(getattr(self, k))
+            key.append(getattr(self, k).lower())
         return tuple(key)
 
     def _key_equality(self, other):
@@ -175,23 +175,23 @@ class AnnotatorTag(Tag):
         for k, validp in self.attributes.items():
             if k in element.attrib.keys():
                 if validp(element.attrib[k]):
-                    setattr(self, k, element.attrib[k])
+                    setattr(self, k.lower(), element.attrib[k].lower())
                 else:
                     fstr = "WARNING: Expected attribute '{}' for xml element "
                     fstr += "<{} ({})>  was not valid ('{}')"
-                    print(fstr.format(k, element.tag,
-                                      element.attrib['id'] 
+                    print(fstr.format(k.lower(), element.tag,
+                                      element.attrib['id'].lower() 
                                       if 'id' in element.attrib.keys() else '',
-                                      element.attrib[k]))
-                    setattr(self, k, element.attrib[k])
+                                      element.attrib[k].lower()))
+                    setattr(self, k.lower(), element.attrib[k].lower())
 
             elif k in self.key:
                 fstr = "WARNING: Expected attribute '%s' for xml element "
                 fstr += "<%s ('%s')>, setting to ''"
-                print(fstr.format(k, element.tag, element.attrib['id'] 
+                print(fstr.format(k.lower(), element.tag, element.attrib['id'].lower() 
                                   if 'id' in element.attrib.keys() else ''))
 
-                setattr(self, k, '')
+                setattr(self, k.lower(), '')
 
     @classmethod
     def fuzzy_end_equality(cls, distance):
@@ -460,7 +460,7 @@ class MedicationTag(DiseaseTag):
         self.type1, self.type2 = sorted([self.type1, self.type2], reverse=True)
 
         for k in self.key:
-            key.append(getattr(self, k))
+            key.append(getattr(self, k).lower())
 
         return tuple(key)
 
@@ -491,7 +491,7 @@ class DocumentTag(Tag):
 
         for k in self.key:
             try:
-                setattr(self, k, element.attrib[k])
+                setattr(self, k.lower(), element.attrib[k].lower())
             except KeyError:
                 continue
 
@@ -499,7 +499,7 @@ class DocumentTag(Tag):
             cls = self.tag_types[e.tag]
             self.annotator_tags.append(cls(e))
 
-    def _get_key(self):
+    def _get_key(self): 
         # Sort of a hack - convert document tag to specific tag 
         # type and return _get_key() value. 
         return self.toTagType()._get_key()
