@@ -178,13 +178,13 @@ class PHIToken(Token):
         super(PHIToken, self).__init__(token, pre_ws, post_ws,
                                        index, start, end)
         self.name = ""
-        self.TYPE = ""
+        self.type = ""
 
     def __repr__(self):
         fstr = "<{}: {}, {}, {}, {}, {}, i:{}, s:{}, e:{}>"
         return fstr.format(self.__class__.__name__,
                            self.name,
-                           self.TYPE,
+                           self.type,
                            self.pre_ws.__repr__(),
                            self.token.__repr__(),
                            self.post_ws.__repr__(),
@@ -192,7 +192,7 @@ class PHIToken(Token):
                            self.start, self.end)
 
     def _get_key(self):
-        return (self.name, self.TYPE, self.start, self.end)
+        return (self.name, self.type, self.start, self.end)
 
 
 class PHITokenSequence(TokenSequence):
@@ -206,7 +206,7 @@ class PHITokenSequence(TokenSequence):
 
         for t in self.tokens:
             t.name = phi_tag.name
-            t.TYPE = phi_tag.TYPE
+            t.type = phi_tag.type
 
 
 class StandoffAnnotation(object):
@@ -753,25 +753,25 @@ class PHITrackEvaluation(CombinedEvaluation):
 
     # list of Tuples of regular expressions for matching (TAG, TYPE)
     # That are considered to be HIPAA protected for the PHI Track evaluation
-    HIPAA_regexes = [(re.compile("NAME"), re.compile("PATIENT")),
-                     (re.compile("LOCATION"), re.compile("CITY")),
-                     (re.compile("LOCATION"), re.compile("STREET")),
-                     (re.compile("LOCATION"), re.compile("ZIP")),
-                     (re.compile("LOCATION"), re.compile("ORGANIZATION")),
-                     (re.compile("DATE"), re.compile(".*")),
-                     (re.compile("CONTACT"), re.compile("PHONE")),
-                     (re.compile("CONTACT"), re.compile("FAX")),
-                     (re.compile("CONTACT"), re.compile("EMAIL")),
-                     (re.compile("ID"), re.compile("SSN")),
-                     (re.compile("ID"), re.compile("MEDICALRECORD")),
-                     (re.compile("ID"), re.compile("HEALTHPLAN")),
-                     (re.compile("ID"), re.compile("ACCOUNT")),
-                     (re.compile("ID"), re.compile("LICENSE")),
-                     (re.compile("ID"), re.compile("VEHICLE")),
-                     (re.compile("ID"), re.compile("DEVICE")),
-                     (re.compile("ID"), re.compile("BIOID")),
-                     (re.compile("ID"), re.compile("IDNUM ")),
-                     (re.compile("AGE"), re.compile(".*"))]
+    HIPAA_regexes = [(re.compile("name"), re.compile("patient")),
+                     (re.compile("location"), re.compile("city")),
+                     (re.compile("location"), re.compile("street")),
+                     (re.compile("location"), re.compile("zip")),
+                     (re.compile("location"), re.compile("organization")),
+                     (re.compile("date"), re.compile(".*")),
+                     (re.compile("contact"), re.compile("phone")),
+                     (re.compile("contact"), re.compile("fax")),
+                     (re.compile("contact"), re.compile("email")),
+                     (re.compile("id"), re.compile("ssn")),
+                     (re.compile("id"), re.compile("medicalrecord")),
+                     (re.compile("id"), re.compile("healthplan")),
+                     (re.compile("id"), re.compile("account")),
+                     (re.compile("id"), re.compile("license")),
+                     (re.compile("id"), re.compile("vehicle")),
+                     (re.compile("id"), re.compile("device")),
+                     (re.compile("id"), re.compile("bioid")),
+                     (re.compile("id"), re.compile("idnum")),
+                     (re.compile("age"), re.compile(".*"))]
 
     def __init__(self, annotator_cas, gold_cas, **kwargs):
 
@@ -809,5 +809,5 @@ class PHITrackEvaluation(CombinedEvaluation):
 
     @staticmethod
     def HIPAA_predicate_filter(tag):
-        return any([n_re.match(tag.name) and t_re.match(tag.TYPE)
+        return any([n_re.match(tag.name) and t_re.match(tag.type)
                     for n_re, t_re in PHITrackEvaluation.HIPAA_regexes])
