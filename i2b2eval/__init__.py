@@ -15,3 +15,6 @@ from classes import StandoffAnnotation, EvaluatePHI, EvaluateCardiacRisk
 from classes import TokenSequence, Token, PHITokenSequence, PHIToken
 
 from evaluate import evaluate, get_predicate_function
+
+import classes
+
