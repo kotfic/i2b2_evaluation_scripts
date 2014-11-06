@@ -807,6 +807,58 @@ class PHITrackEvaluation(CombinedEvaluation):
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
                       label="HIPAA Relaxed")
 
+
+
+        # Change equality back to strict
+        PHITag.strict_equality()
+
+        # Remove HIPAA Filter for now
+        del kwargs['filters']
+        
+        # New Request for Start-End only matching (could do
+        # this as a context manager) but we'll just hack it here
+        # Set key's to just start/end, 
+        # import pudb; pu.db
+
+        _PHI_keys = {}
+        for k, cls in PHITag.tag_types.items():
+            if k != "PHI":
+                _PHI_keys[k] = cls.key
+                cls.key = ['start', 'end']
+
+        # Big hack - PHIToken._get_key hardcodes what it returns
+        # Thats what I get for trying to do it quick and dirty
+        PHIToken._get_key = lambda s: (s.start, s.end)
+        
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs),
+                      label="Binary Token")
+
+        # Basic Evaluation
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
+                      label="Binary Strict")
+
+        # Add HIPAA filter to evaluation arguments
+        kwargs['filters'] = [PHITrackEvaluation.HIPAA_predicate_filter]
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs),
+                      label="Binary HIPPA Token")
+
+        # Change equality back to strict
+        PHITag.strict_equality()
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
+                      label="Binary HIPAA Strict")
+
+        # Restore Class Keys
+        for k, cls in PHITag.tag_types.items():
+            if k != "PHI":
+                cls.key = _PHI_keys[k]
+
+        # restore dirty dirty hardcoded PHIToken hack
+        PHIToken._get_key = lambda s: (s.name, s.TYPE, s.start, s.end)
+        
     @staticmethod
     def HIPAA_predicate_filter(tag):
         return any([n_re.match(tag.name) and t_re.match(tag.TYPE)
