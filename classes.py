@@ -858,7 +858,37 @@ class PHITrackEvaluation(CombinedEvaluation):
 
         # restore dirty dirty hardcoded PHIToken hack
         PHIToken._get_key = lambda s: (s.name, s.TYPE, s.start, s.end)
+
+        for t in PHITag.tag_types.keys():
+            if t != "PHI":
+                self.add_tag_name_specific_evaluations(t, annotator_cas, gold_cas, kwargs)
         
+    def add_tag_name_specific_evaluations(self, name, annotator_cas, gold_cas, kwargs):
+        kwargs['filters'] = [ lambda tag: tag.name == name ]
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs),
+                      label="{} Token".format(name))
+
+        # Basic Evaluation
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
+                      label="{} Strict".format(name))
+
+        # Add HIPAA filter to evaluation arguments
+        kwargs['filters'].extend([PHITrackEvaluation.HIPAA_predicate_filter])
+
+        # Make sure the tag has the name passed in as 'name'  AND passes HIPAA_predicate_filter
+        kwargs['conjunctive'] = True
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateTokenizedPHI(annotator_cas, gold_cas, **kwargs),
+                      label="{} HIPPA Token".format(name))
+
+        # Change equality back to strict
+        PHITag.strict_equality()
+        self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
+                      label="{} Binary HIPAA Strict".format(name))
+
+
     @staticmethod
     def HIPAA_predicate_filter(tag):
         return any([n_re.match(tag.name) and t_re.match(tag.TYPE)
