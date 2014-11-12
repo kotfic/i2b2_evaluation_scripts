@@ -896,7 +896,7 @@ class PHITrackEvaluation(CombinedEvaluation):
         # Change equality back to strict
         PHITag.strict_equality()
         self.add_eval(EvaluatePHI(annotator_cas, gold_cas, **kwargs),
-                      label="{} Binary HIPAA Strict".format(name))
+                      label="{} HIPAA Strict".format(name))
 
 
     @staticmethod
