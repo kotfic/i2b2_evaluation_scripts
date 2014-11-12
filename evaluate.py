@@ -125,7 +125,9 @@ import argparse
 import os
 from collections import defaultdict
 from tags import DocumentTag, PHITag, MEDICAL_TAG_CLASSES
-
+import csv
+import pandas as pd
+import sys
 
 # This function is 'exterimental' as in it works for my use cases
 # But is not generally well documented or a part of the expected
@@ -286,6 +288,7 @@ def evaluate(system, gs, eval_class, **kwargs):
 
 
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="To Write")
 
     sp = parser.add_subparsers(dest="sp", help="To Write")
@@ -334,22 +337,50 @@ if __name__ == "__main__":
     sp_cr.add_argument("to_dir",
                        help="directories to save documents to")
 
+    sp_csv = sp.add_parser("csv",
+                          help="convert a document to different types")
+    sp_csv.add_argument("from_dirs",
+                       help="directories to pull documents from",
+                       nargs="+")
+    sp_csv.add_argument("to_dir",
+                       help="directories to save documents to")
+
+
     args = parser.parse_args()
 
-    if args.filter:
-        e = evaluate(args.from_dirs, args.to_dir,
-                     PHITrackEvaluation if args.sp == "phi" else
-                     CardiacRiskTrackEvaluation,
-                     verbose=args.verbose,
-                     invert=args.invert,
-                     conjunctive=args.conjunctive,
-                     filters=[get_predicate_function(a, PHITag if args.sp == "phi" else DocumentTag)
-                              for a in args.filter.split(",")])
+    if args.sp == "csv":
+        dirs = args.from_dirs[0].split("/")
+        run, team_id = dirs[-2], dirs[-3]
+
+        system_sa = get_document_dict_by_system_id(args.from_dirs)
+        dicts = []
+        for k, sa in system_sa[''].items():
+            for tag in sa.phi:
+                t = tag.toDict()
+                t['doc_id'] = k
+                t['run'] = run
+                t['team_id'] = team_id
+                dicts.append(t)
+        
+        sys_df = pd.DataFrame(dicts)
+        sys_df.to_csv("system_tags/{}_{}_tags.csv".format(team_id, run), index=False, encoding='utf8')
+        sys.exit(0)
+        
     else:
-        e = evaluate(args.from_dirs, args.to_dir,
-                     PHITrackEvaluation if args.sp == "phi" else
-                     CardiacRiskTrackEvaluation,
-                     verbose=args.verbose)
+        if args.filter:
+            e = evaluate(args.from_dirs, args.to_dir,
+                         PHITrackEvaluation if args.sp == "phi" else
+                         CardiacRiskTrackEvaluation,
+                         verbose=args.verbose,
+                         invert=args.invert,
+                         conjunctive=args.conjunctive,
+                         filters=[get_predicate_function(a, PHITag if args.sp == "phi" else DocumentTag)
+                                  for a in args.filter.split(",")])
+        else:
+            e = evaluate(args.from_dirs, args.to_dir,
+                         PHITrackEvaluation if args.sp == "phi" else
+                         CardiacRiskTrackEvaluation,
+                         verbose=args.verbose)
         
 
 ### Added to grab summary P/R/F1 statistics and put them in CSV's for each team
@@ -388,9 +419,6 @@ if __name__ == "__main__":
             
         return lines
         
-
-    import csv
-    import pandas as pd
  
     dirs = args.from_dirs[0].split("/")
  
