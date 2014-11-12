@@ -748,6 +748,16 @@ class CardiacRiskTrackEvaluation(CombinedEvaluation):
         self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
                       label="")
 
+        for t in DocumentTag.tag_types.keys():
+            self.add_tag_name_specific_evaluations(t, annotator_cas, gold_cas, kwargs)
+
+    def add_tag_name_specific_evaluations(self, name, annotator_cas, gold_cas, kwargs):
+        kwargs['filters'] = [ lambda tag: tag.name == name ]
+        # Tokenized Evaluation
+        self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
+                      label="{} Only".format(name))
+
+        
 
 class PHITrackEvaluation(CombinedEvaluation):
 
