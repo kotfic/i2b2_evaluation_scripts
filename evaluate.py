@@ -355,7 +355,7 @@ if __name__ == "__main__":
         system_sa = get_document_dict_by_system_id(args.from_dirs)
         dicts = []
         for k, sa in system_sa[''].items():
-            for tag in sa.phi:
+            for tag in sa.doc_tags:
                 t = tag.toDict()
                 t['doc_id'] = k
                 t['run'] = run

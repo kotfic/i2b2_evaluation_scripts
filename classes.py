@@ -751,12 +751,39 @@ class CardiacRiskTrackEvaluation(CombinedEvaluation):
         for t in DocumentTag.tag_types.keys():
             self.add_tag_name_specific_evaluations(t, annotator_cas, gold_cas, kwargs)
 
+    def add_indicator_specific_evaluation(self, name, indicator,
+                                          annotator_cas, gold_cas, kwargs):
+        def indicator_p(tag):
+            try:
+
+                return tag.indicator.lower() == indicator.lower()
+            except AttributeError:
+                return False
+            
+        kwargs['filters'] = [ lambda tag: tag.name == name, indicator_p]
+        kwargs['conjunctive'] = True
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
+                      label="{}-{}".format(name, indicator.replace(" ", "_")))
+
+            
     def add_tag_name_specific_evaluations(self, name, annotator_cas, gold_cas, kwargs):
         kwargs['filters'] = [ lambda tag: tag.name == name ]
+
         # Tokenized Evaluation
         self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
                       label="{} Only".format(name))
 
+        cls = DocumentTag.tag_types[name]
+        
+        if hasattr(cls, "valid_indicator"):
+            for ind in cls.valid_indicator:
+                self.add_indicator_specific_evaluation(name, ind,
+                                                       annotator_cas,
+                                                       gold_cas,
+                                                       kwargs)
+                
         
 
 class PHITrackEvaluation(CombinedEvaluation):
