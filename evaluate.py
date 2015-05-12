@@ -505,7 +505,7 @@ if __name__ == "__main__":
                     dicts.append(tag_dict)
             
         
-    systems = pd.read_csv("/home/ckotfila/i2b2_2014/system_submissions.csv", 
+    systems = pd.read_csv("/home/kotfic/org2/data/i2b2/i2b2_2014/system_submissions.csv", 
                           true_values=["yes"], 
                           false_values=["no"])
 

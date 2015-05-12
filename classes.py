@@ -744,12 +744,38 @@ class CardiacRiskTrackEvaluation(CombinedEvaluation):
     def __init__(self, annotator_cas, gold_cas, **kwargs):
 
         super(CardiacRiskTrackEvaluation, self).__init__()
+
         # Basic Evaluation
         self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
                       label="")
 
         for t in DocumentTag.tag_types.keys():
-            self.add_tag_name_specific_evaluations(t, annotator_cas, gold_cas, kwargs)
+            self.add_tag_name_specific_evaluations(t, annotator_cas,
+                                                   gold_cas, kwargs)
+
+        # Add Smoker status specific evaluations
+        cls = DocumentTag.tag_types['SMOKER']
+        if hasattr(cls, "valid_status"):
+            for s in cls.valid_status:
+                self.add_smoker_status_specific_evaluation(s, annotator_cas,
+                                                           gold_cas,
+                                                           kwargs)
+
+    def add_smoker_status_specific_evaluation(self, status,
+                                              annotator_cas, gold_cas, kwargs):
+        def status_p(tag):
+            try:
+                return tag.status.lower() == status.lower()
+            except AttributeError:
+                return False
+
+        kwargs['filters'] = [lambda tag: tag.name == "SMOKER", status_p]
+        kwargs['conjunctive'] = True
+
+        # Tokenized Evaluation
+        self.add_eval(EvaluateCardiacRisk(annotator_cas, gold_cas, **kwargs),
+                      label="{}-{}".format("SMOKER", status.replace(" ", "_")))
+
 
     def add_indicator_specific_evaluation(self, name, indicator,
                                           annotator_cas, gold_cas, kwargs):
